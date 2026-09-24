@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameVerse | اللعبة</title>
+
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: "Cairo", sans-serif;
+    color: #fff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        radial-gradient(circle at 10% 10%, rgba(124,58,237,.25), transparent 30%),
+        radial-gradient(circle at 90% 20%, rgba(6,182,212,.18), transparent 30%),
+        radial-gradient(circle at 50% 100%, rgba(236,72,153,.14), transparent 35%),
+        #050816;
+}
+
+/* =========================================================
+   BACK BUTTON
+========================================================= */
+
+.back-btn {
+    position: fixed;
+    top: 16px;
+    z-index: 50;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px 16px;
+
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.12);
+
+    background: rgba(15,23,42,.65);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+
+    color: #fff;
+    text-decoration: none;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+
+    transition: .2s;
+}
+
+/* Dynamic positioning based on text direction */
+html[dir="rtl"] .back-btn {
+    left: 16px;
+}
+
+html[dir="ltr"] .back-btn {
+    right: 16px;
+}
+
+.back-btn:hover {
+    background: rgba(124,58,237,.25);
+    border-color: rgba(167,139,250,.4);
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   PC MODE
+========================================================= */
+
+body.pc-mode .stage-wrap {
+    width: 100%;
+    height: 100%;
+}
+
+body.pc-mode .stage {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+body.pc-mode #gameFrame {
+    width: 100%;
+    height: 100%;
+    transform: none;
+}
+
+/* =========================================================
+   PHONE MODE
+========================================================= */
+
+body.phone-mode {
+    padding: 30px 0;
+}
+
+body.phone-mode .stage-wrap {
+    width: 420px;
+    height: 800px;
+    max-height: calc(100vh - 60px);
+}
+
+body.phone-mode .stage {
+    width: 100%;
+    height: 100%;
+
+    position: relative;
+    overflow: hidden;
+
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 34px;
+
+    box-shadow:
+        0 30px 90px rgba(0,0,0,.55),
+        0 0 0 6px rgba(255,255,255,.03);
+}
+
+body.phone-mode #gameFrame {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    border: none;
+    transform-origin: top left;
+}
+
+.stage-wrap {
+    position: relative;
+}
+
+.stage {
+    display: block;
+}
+
+#gameFrame {
+    display: block;
+    background: #050816;
+}
+
+.loading {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #94a3b8;
+    font-size: 13px;
+
+    background: #050816;
+}
+
+</style>
+</head>
+
+<body>
+
+<a class="back-btn" id="backBtn" href="index.html">← back</a>
+
+<div class="stage-wrap">
+    <div class="stage" id="stage">
+        <div class="loading" id="loadingMsg">جاري تحميل اللعبة...</div>
+        <iframe
+            id="gameFrame"
+            title="game"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-pointer-lock allow-orientation-lock"
+        ></iframe>
+    </div>
+</div>
+
+<script>
+
+/* =====================================================
+   TRANSLATIONS DICTIONARY
+===================================================== */
+const translations = {
+    ar: {
+        back: "رجوع",
+        loading: "جاري تحميل اللعبة..."
+    },
+    fr: {
+        back: "Retour",
+        loading: "Chargement du jeu..."
+    },
+    en: {
+        back: "Back",
+        loading: "Loading game..."
+    }
+};
+
+// Retrieve language from profile or default to 'ar'
+let currentLang = "ar";
+const playerProfile = localStorage.getItem("gameVerseProfile");
+
+if (playerProfile) {
+    try {
+        const profile = JSON.parse(playerProfile);
+        if (profile.language && translations[profile.language]) {
+            currentLang = profile.language;
+        }
+    } catch (e) {}
+}
+
+// Apply text direction and translations
+const htmlEl = document.documentElement;
+htmlEl.lang = currentLang;
+htmlEl.dir = (currentLang === "ar") ? "rtl" : "ltr";
+
+const t = translations[currentLang];
+document.getElementById("backBtn").innerHTML = (currentLang === "ar" ? "← " : "→ ") + t.back;
+document.getElementById("loadingMsg").textContent = t.loading;
+
+
+/* =====================================================
+   REFERENCE SIZE for phone mode
+===================================================== */
+
+const REF_W = 480;
+const REF_H = 1000;
+
+/* =====================================================
+   READ GAME PARAM
+===================================================== */
+
+const params = new URLSearchParams(window.location.search);
+const gameFile = params.get("game");
+
+if (!gameFile) {
+    window.location.replace("index.html");
+}
+
+if (!playerProfile) {
+    window.location.replace("profile.html");
+}
+
+let device = "pc";
+try {
+    const profile = JSON.parse(playerProfile);
+    if (profile.device === "phone" || profile.device === "pc") {
+        device = profile.device;
+    }
+} catch (e) {}
+
+document.body.classList.add(device === "phone" ? "phone-mode" : "pc-mode");
+
+/* =====================================================
+   LOAD THE GAME INSIDE THE FRAME
+===================================================== */
+
+const frame = document.getElementById("gameFrame");
+const stage = document.getElementById("stage");
+const loadingMsg = document.getElementById("loadingMsg");
+
+if (gameFile) {
+    frame.src = gameFile;
+}
+
+let recovered = false;
+
+frame.addEventListener("load", function () {
+    loadingMsg.style.display = "none";
+
+    try {
+        const loadedUrl = frame.contentWindow.location.href;
+        if (/profile\.html(\?|#|$)/.test(loadedUrl) && !recovered) {
+            recovered = true;
+            frame.src = gameFile;
+        }
+    } catch (e) {}
+});
+
+/* =====================================================
+   SCALE-TO-FIT (phone mode only)
+===================================================== */
+
+function fitPhoneFrame() {
+    if (device !== "phone") return;
+
+    frame.style.width = REF_W + "px";
+    frame.style.height = REF_H + "px";
+
+    const stageW = stage.clientWidth;
+    const stageH = stage.clientHeight;
+
+    const scale = Math.min(stageW / REF_W, stageH / REF_H);
+
+    const offsetX = (stageW - REF_W * scale) / 2;
+    const offsetY = (stageH - REF_H * scale) / 2;
+
+    frame.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+}
+
+fitPhoneFrame();
+window.addEventListener("resize", fitPhoneFrame);
+
+</script>
+
+</body>
+</html>

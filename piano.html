@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <style>
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        #pianoCanvas { cursor: pointer; border: 2px solid #333; background-color: #000; }
+    </style>
+</head>
+<body>
+    <audio id="bgMusic" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <canvas id="pianoCanvas" width="400" height="600"></canvas>
+    <script>
+        const canvas = document.getElementById('pianoCanvas');
+        const ctx = canvas.getContext('2d');
+        const bgMusic = document.getElementById('bgMusic');
+        
+        let tiles = [], score = 0, speed = 5, isGameOver = false;
+        let currentLevel = 0;
+        let startTime = 0;
+        let finalPlayTime = 0; 
+        
+        let isCountingDown = true;
+        let countdownValue = 3;
+        let lastCountdownTime = Date.now();
+
+        let instrumentsList = ["🎹", "🎻", "🎸", "🎷", "🎺"];
+        let bgInstruments = Array.from({length: 8}, () => ({
+            symbol: instrumentsList[Math.floor(Math.random() * instrumentsList.length)],
+            x: Math.random() * 350, y: Math.random() * 600,
+            size: 30 + Math.random() * 40, speed: 0.1 + Math.random() * 0.2
+        }));
+
+        function drawBackground() {
+            let grad = ctx.createLinearGradient(0, 0, 0, 600);
+            grad.addColorStop(0, "#007bff");
+            grad.addColorStop(1, "#8a2be2");
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 400, 600);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+            bgInstruments.forEach(inst => {
+                ctx.font = inst.size + "px Arial";
+                ctx.fillText(inst.symbol, inst.x, inst.y);
+                inst.y += inst.speed;
+                if (inst.y > 650) inst.y = -50;
+            });
+        }
+
+        function drawLevelBar() {
+            ctx.fillStyle = "rgba(0,0,0,0.2)";
+            ctx.fillRect(0, 0, 400, 50);
+            ctx.fillStyle = "white";
+            ctx.font = "bold 20px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText("Lv " + currentLevel, 20, 35);
+            ctx.textAlign = "center";
+            ctx.font = "bold 25px Arial";
+            
+            finalPlayTime = Math.floor((Date.now() - startTime) / 1000);
+            let mins = Math.floor(finalPlayTime / 60).toString().padStart(2, '0');
+            let secs = (finalPlayTime % 60).toString().padStart(2, '0');
+            ctx.fillText(mins + ":" + secs, 200, 35); 
+            
+            let pulse = Math.sin(Date.now() / 200) * 5 + 25; 
+            for(let i = 0; i < 5; i++) {
+                let isGolden = i < currentLevel;
+                ctx.fillStyle = isGolden ? "#FFD700" : "rgba(255,255,255,0.3)";
+                ctx.font = (isGolden ? pulse : 25) + "px Arial";
+                ctx.fillText("★", 300 + (i * 25), 35);
+            }
+            
+            ctx.fillStyle = "white";
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 4;
+            ctx.font = "bold 50px Arial Black";
+            ctx.textAlign = "center";
+            ctx.fillText(score, 200, 95);
+            ctx.shadowBlur = 0;
+        }
+
+        function drawGameOverScreen() {
+            drawBackground();
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+            ctx.font = "25px Arial";
+            ctx.fillText("Someone Is Leaving", 200, 80);
+            ctx.font = "40px Arial";
+            ctx.fillText("👑 👑 👑", 200, 130);
+            ctx.font = "bold 70px Arial";
+            ctx.fillText(score, 200, 210);
+            ctx.font = "20px Arial";
+            ctx.fillText("Final Score", 200, 240);
+            ctx.fillStyle = "#FFD700";
+            ctx.font = "bold 25px Arial";
+            ctx.fillText("Level: " + currentLevel, 200, 280);
+            let mins = Math.floor(finalPlayTime / 60).toString().padStart(2, '0');
+            let secs = (finalPlayTime % 60).toString().padStart(2, '0');
+            ctx.fillText("Time: " + mins + ":" + secs, 200, 315);
+            
+            // زر Home كبير
+            ctx.fillStyle = "#2c3e50";
+            ctx.fillRect(40, 420, 150, 130);
+            ctx.fillStyle = "white";
+            ctx.font = "80px Arial";
+            ctx.fillText("🏠", 115, 505);
+            
+            // زر Restart كبير
+            ctx.fillStyle = "#2c3e50";
+            ctx.fillRect(210, 420, 150, 130);
+            ctx.fillStyle = "white";
+            ctx.fillText("↻", 285, 505);
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, 400, 600);
+            if (isCountingDown) {
+                drawBackground();
+                ctx.fillStyle = "white";
+                ctx.font = "bold 100px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText(countdownValue, 200, 300);
+                if (Date.now() - lastCountdownTime > 1000) {
+                    countdownValue--;
+                    lastCountdownTime = Date.now();
+                    if (countdownValue === 0) { isCountingDown = false; startTime = Date.now(); finalPlayTime = 0; }
+                }
+            } else if (isGameOver) {
+                drawGameOverScreen();
+            } else {
+                if (bgMusic.paused) bgMusic.play().catch(() => {});
+                drawBackground();
+                speed = 5 + (score / 100);
+                if (tiles.length === 0 || tiles[tiles.length - 1].y > 50) 
+                    tiles.push({ x: Math.floor(Math.random() * 4) * 100, y: -150, w: 100, h: 150 });
+                tiles.forEach(t => { t.y += speed; ctx.fillStyle = "black"; ctx.fillRect(t.x, t.y, t.w, t.h); if (t.y > 600) isGameOver = true; });
+                tiles = tiles.filter(t => t.y < 700);
+                drawLevelBar();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (isCountingDown) return;
+            let rect = canvas.getBoundingClientRect();
+            let mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            
+            if (isGameOver) {
+                // ضغط زر Home
+                if (mx > 40 && mx < 190 && my > 420 && my < 550) {
+                    window.location.href = 'index.html'; 
+                } 
+                // ضغط زر Restart
+                else if (mx > 210 && mx < 360 && my > 420 && my < 550) {
+                    score = 0; tiles = []; currentLevel = 0; isGameOver = false; 
+                    isCountingDown = true; countdownValue = 3; lastCountdownTime = Date.now();
+                }
+                return;
+            }
+            for (let i = tiles.length - 1; i >= 0; i--) {
+                if (mx > tiles[i].x && mx < tiles[i].x + 100 && my > tiles[i].y && my < tiles[i].y + 150) {
+                    tiles.splice(i, 1); score += 10; currentLevel = Math.floor(score / 300); return;
+                }
+            }
+            isGameOver = true;
+        });
+        gameLoop();
+    </script>
+</body>
+</html>

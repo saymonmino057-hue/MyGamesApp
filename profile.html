@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>GameVerse | Player Info</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+
+<style>
+
+/* =====================================================
+   RESET & TOKENS (ULTRA GAMING VIBE)
+===================================================== */
+
+:root {
+    --bg-void: #020108;
+    --panel-bg: rgba(12, 8, 25, 0.82);
+    --panel-border: rgba(0, 240, 255, 0.25);
+    --neon-pink: #ff0055;
+    --neon-cyan: #00f0ff;
+    --neon-yellow: #f3e600;
+    --neon-purple: #8000ff;
+    --text-main: #ffffff;
+    --text-muted: #94a3b8;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    font-family: "Cairo", sans-serif;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px;
+    overflow-x: hidden;
+    background-color: var(--bg-void);
+    background-image: 
+        radial-gradient(circle at 10% 10%, rgba(128, 0, 255, 0.18), transparent 45%),
+        radial-gradient(circle at 90% 90%, rgba(0, 240, 255, 0.15), transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(255, 0, 85, 0.1), transparent 60%);
+}
+
+/* =====================================================
+   BACKGROUND HUD LINES
+===================================================== */
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, black 50%, transparent 90%);
+}
+
+.glow {
+    position: fixed;
+    width: 350px;
+    height: 350px;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.glow.one {
+    background: rgba(128, 0, 255, 0.25);
+    left: -150px;
+    top: -150px;
+    animation: pulseGlow 5s ease-in-out infinite alternate;
+}
+
+.glow.two {
+    background: rgba(0, 240, 255, 0.2);
+    right: -150px;
+    bottom: -150px;
+    animation: pulseGlow 7s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGlow {
+    0% { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(1.25); opacity: 1; }
+}
+
+/* =====================================================
+   CONTAINER
+===================================================== */
+
+.container {
+    width: min(600px, 100%);
+    position: relative;
+    z-index: 2;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(35px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =====================================================
+   LOGO & HEADER (GAMING HUD STYLE)
+===================================================== */
+
+.logo {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.logo-icon {
+    width: 75px;
+    height: 75px;
+    display: grid;
+    place-items: center;
+    margin: auto;
+    border-radius: 20px;
+    font-size: 38px;
+    background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+    box-shadow: 0 0 35px rgba(255, 0, 85, 0.5);
+    position: relative;
+    clip-path: polygon(20% 0%, 100% 0%, 100% 80%, 80% 100%, 0% 100%, 0% 20%);
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.logo h1 {
+    margin-top: 15px;
+    font-family: "Orbitron", sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.logo h1 span {
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-yellow));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 25px rgba(0, 240, 255, 0.4);
+}
+
+.logo p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 5px;
+}
+
+/* =====================================================
+   CARD (HIGH-TECH GAMING PANEL)
+===================================================== */
+
+.card {
+    padding: 35px;
+    border-radius: 22px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7),
+                inset 0 0 20px rgba(0, 240, 255, 0.05);
+    position: relative;
+}
+
+/* Accent corners */
+.card::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 30px;
+    width: 60px;
+    height: 3px;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.card::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    right: 30px;
+    width: 60px;
+    height: 3px;
+    background: var(--neon-pink);
+    box-shadow: 0 0 10px var(--neon-pink);
+}
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+.card-title {
+    margin-bottom: 25px;
+}
+
+.card-title h2 {
+    font-family: "Orbitron", sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.5px;
+}
+
+.card-title p {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* =====================================================
+   PHOTO SECTION
+===================================================== */
+
+.photo-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 16px;
+    background: rgba(0, 240, 255, 0.02);
+    border: 1px solid rgba(0, 240, 255, 0.1);
+    border-radius: 16px;
+}
+
+.avatar {
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(128, 0, 255, 0.3), rgba(0, 240, 255, 0.2));
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+    font-size: 38px;
+}
+
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.photo-info {
+    flex: 1;
+}
+
+.photo-info h3 {
+    font-family: "Orbitron", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #fff;
+}
+
+.photo-info p {
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+    margin-bottom: 12px;
+}
+
+.photo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.photo-btn:hover {
+    background: rgba(0, 240, 255, 0.25);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+/* =====================================================
+   FORM
+===================================================== */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+label {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+input,
+select {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    outline: none;
+    background: rgba(8, 4, 18, 0.8);
+    color: white;
+    padding: 0 15px;
+    font-family: inherit;
+    font-size: 13px;
+    transition: all 0.25s ease;
+}
+
+input::placeholder {
+    color: #4b5563;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 240, 255, 0.05);
+    box-shadow: 0 0 25px rgba(0, 240, 255, 0.25);
+}
+
+select option {
+    background: #0d081f;
+    color: white;
+}
+
+/* =====================================================
+   DEVICE SELECTOR (GAMING CARDS)
+===================================================== */
+
+.device-title {
+    margin-top: 15px;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.devices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.device {
+    position: relative;
+    cursor: pointer;
+}
+
+.device input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.device-box {
+    height: 90px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.25s ease;
+}
+
+.device-icon {
+    font-size: 28px;
+}
+
+.device-name {
+    font-family: "Orbitron", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+.device-small {
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.device input:checked + .device-box {
+    border-color: var(--neon-pink);
+    background: linear-gradient(135deg, rgba(255, 0, 85, 0.2), rgba(128, 0, 255, 0.15));
+    box-shadow: 0 0 30px rgba(255, 0, 85, 0.35);
+}
+
+.device:hover .device-box {
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* =====================================================
+   BUTTON & ERROR
+===================================================== */
+
+.start-btn {
+    width: 100%;
+    height: 52px;
+    margin-top: 25px;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: "Orbitron", sans-serif;
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+    box-shadow: 0 10px 30px rgba(255, 0, 85, 0.5);
+    transition: all 0.25s ease;
+}
+
+.start-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(255, 0, 85, 0.7);
+    filter: brightness(1.15);
+}
+
+.start-btn:active {
+    transform: scale(0.98);
+}
+
+.error {
+    display: none;
+    color: #ff80ab;
+    background: rgba(255, 0, 85, 0.1);
+    border: 1px solid rgba(255, 0, 85, 0.3);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 11px;
+    margin-top: 15px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 10px;
+    margin-top: 20px;
+    letter-spacing: 0.5px;
+}
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 600px) {
+    body {
+        padding: 15px;
+    }
+    .card {
+        padding: 22px;
+        border-radius: 18px;
+    }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-group.full {
+        grid-column: auto;
+    }
+    .photo-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .photo-info {
+        width: 100%;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="glow one"></div>
+<div class="glow two"></div>
+
+<div class="container">
+
+    <!-- LOGO -->
+    <div class="logo">
+        <div class="logo-icon">🎮</div>
+        <h1>Welcome to <span>GameVerse</span></h1>
+        <p>Before you dive into the world of games, tell us a bit about yourself 👋</p>
+    </div>
+
+    <!-- CARD -->
+    <div class="card">
+
+        <div class="card-title">
+            <h2>👤 Player Info</h2>
+            <p>This information helps us set up your experience.</p>
+        </div>
+
+        <!-- PHOTO -->
+        <div class="photo-section">
+            <div class="avatar">
+                <span id="avatarEmoji">👤</span>
+                <img id="avatarImage" alt="Player photo">
+            </div>
+
+            <div class="photo-info">
+                <h3>Profile Picture</h3>
+                <p>Choose a picture to use as your avatar in your player profile.</p>
+                <label class="photo-btn">
+                    📷 Choose Photo
+                    <input id="photoInput" type="file" accept="image/*" hidden>
+                </label>
+            </div>
+        </div>
+
+        <!-- FORM -->
+        <form id="profileForm">
+            <div class="form-grid">
+
+                <!-- FIRST NAME -->
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input id="firstName" type="text" placeholder="e.g. John" maxlength="30" required>
+                </div>
+
+                <!-- LAST NAME -->
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input id="lastName" type="text" placeholder="e.g. Smith" maxlength="30" required>
+                </div>
+
+                <!-- AGE -->
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input id="age" type="number" placeholder="e.g. 18" min="5" max="100" required>
+                </div>
+
+                <!-- NICKNAME -->
+                <div class="form-group">
+                    <label for="nickname">Player Nickname 🎮</label>
+                    <input id="nickname" type="text" placeholder="e.g. ShadowX" maxlength="20">
+                </div>
+
+                <!-- LANGUAGE SELECTOR -->
+                <div class="form-group full">
+                    <label for="language">🌐 Preferred Language (Lugha / Langue)</label>
+                    <select id="language" required>
+                        <option value="" disabled selected>Select your preferred language</option>
+                        <option value="arabic">Arabic (العربية)</option>
+                        <option value="french">French (Français)</option>
+                        <option value="english">English</option>
+                    </select>
+                </div>
+
+                <!-- DEVICE -->
+                <div class="form-group full">
+                    <div class="device-title">📱 Where do you usually play?</div>
+                    <div class="devices">
+
+                        <label class="device">
+                            <input type="radio" name="device" value="phone" required>
+                            <div class="device-box">
+                                <div class="device-icon">📱</div>
+                                <div class="device-name">Phone</div>
+                                <div class="device-small">Mobile / Tablet</div>
+                            </div>
+                        </label>
+
+                        <label class="device">
+                            <input type="radio" name="device" value="pc">
+                            <div class="device-box">
+                                <div class="device-icon">💻</div>
+                                <div class="device-name">PC</div>
+                                <div class="device-small">Computer / Laptop</div>
+                            </div>
+                        </label>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ERROR -->
+            <div class="error" id="error">
+                Please fill in all required information.
+            </div>
+
+            <!-- START -->
+            <button type="submit" class="start-btn">
+                Enter the World of Games 🎮
+            </button>
+
+        </form>
+
+    </div>
+
+    <div class="footer">
+        GameVerse © 2026 — Enjoy playing 🚀
+    </div>
+
+</div>
+
+<script>
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
+const form = document.getElementById("profileForm");
+const photoInput = document.getElementById("photoInput");
+const avatarImage = document.getElementById("avatarImage");
+const avatarEmoji = document.getElementById("avatarEmoji");
+const error = document.getElementById("error");
+
+/* =====================================================
+   PHOTO
+===================================================== */
+
+let profilePhoto = "";
+
+photoInput.addEventListener("change", function () {
+    const file = this.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        profilePhoto = event.target.result;
+        avatarImage.src = profilePhoto;
+        avatarImage.style.display = "block";
+        avatarEmoji.style.display = "none";
+    };
+    reader.readAsDataURL(file);
+});
+
+/* =====================================================
+   LOAD SAVED PROFILE
+===================================================== */
+
+const savedProfile = localStorage.getItem("gameVerseProfile");
+
+if (savedProfile) {
+    try {
+        const profile = JSON.parse(savedProfile);
+
+        if (profile.firstName)
+            document.getElementById("firstName").value = profile.firstName;
+
+        if (profile.lastName)
+            document.getElementById("lastName").value = profile.lastName;
+
+        if (profile.age)
+            document.getElementById("age").value = profile.age;
+
+        if (profile.nickname)
+            document.getElementById("nickname").value = profile.nickname;
+
+        if (profile.language)
+            document.getElementById("language").value = profile.language;
+
+        if (profile.device) {
+            const device = document.querySelector(`input[name="device"][value="${profile.device}"]`);
+            if (device) device.checked = true;
+        }
+
+        if (profile.photo) {
+            profilePhoto = profile.photo;
+            avatarImage.src = profile.photo;
+            avatarImage.style.display = "block";
+            avatarEmoji.style.display = "none";
+        }
+    }
+    catch (e) {
+        console.log("Could not load saved data");
+    }
+}
+
+/* =====================================================
+   SUBMIT
+===================================================== */
+
+form.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const firstName = document.getElementById("firstName").value.trim();
+    const lastName = document.getElementById("lastName").value.trim();
+    const age = document.getElementById("age").value;
+    const nickname = document.getElementById("nickname").value.trim();
+    const language = document.getElementById("language").value;
+    const deviceElement = document.querySelector('input[name="device"]:checked');
+
+    /* VALIDATION */
+    if (!firstName || !lastName || !age || !language || !deviceElement) {
+        error.style.display = "block";
+        return;
+    }
+
+    error.style.display = "none";
+
+    /* PROFILE OBJECT */
+    const profile = {
+        firstName: firstName,
+        lastName: lastName,
+        age: age,
+        nickname: nickname || firstName,
+        language: language,
+        device: deviceElement.value,
+        photo: profilePhoto
+    };
+
+    /* SAVE */
+    try {
+        localStorage.setItem("gameVerseProfile", JSON.stringify(profile));
+    }
+    catch (e) {
+        console.log("Photo too large, could not save it.");
+        const profileWithoutPhoto = {
+            ...profile,
+            photo: ""
+        };
+        localStorage.setItem("gameVerseProfile", JSON.stringify(profileWithoutPhoto));
+    }
+
+    /* BUTTON EFFECT */
+    const button = document.querySelector(".start-btn");
+    button.textContent = "Entering... 🚀";
+    button.style.opacity = ".8";
+    button.disabled = true;
+
+    /* GO TO GAME HUB */
+    setTimeout(function () {
+        window.location.href = "index.html";
+    }, 500);
+});
+
+</script>
+
+</body>
+</html>

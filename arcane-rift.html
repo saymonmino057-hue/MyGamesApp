@@ -1,0 +1,1744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Arcane Rift - Spell Caster</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #030514;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+#game {
+    position: relative;
+    width: min(100vw, 1500px);
+    height: min(100vh, 900px);
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 50% 75%, rgba(92, 30, 180, .18), transparent 35%),
+        radial-gradient(circle at 20% 20%, rgba(0, 170, 255, .08), transparent 30%),
+        #030514;
+    box-shadow:
+        0 0 80px rgba(80, 30, 255, .2),
+        inset 0 0 80px rgba(0, 0, 0, .8);
+    border-radius: 18px;
+}
+
+canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+/* HUD */
+
+#hud {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+
+    min-width: 520px;
+    padding: 13px 25px;
+
+    display: flex;
+    justify-content: space-between;
+    gap: 35px;
+
+    border: 1px solid rgba(120,180,255,.25);
+    border-radius: 20px;
+
+    background: rgba(4,10,32,.72);
+    backdrop-filter: blur(15px);
+
+    box-shadow:
+        0 0 30px rgba(50,100,255,.12),
+        inset 0 0 20px rgba(80,120,255,.04);
+}
+
+.stat {
+    text-align: center;
+    min-width: 90px;
+}
+
+.stat small {
+    display: block;
+    color: #7786ad;
+    font-size: 10px;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+}
+
+.stat strong {
+    font-size: 24px;
+    color: #fff;
+    text-shadow: 0 0 15px currentColor;
+}
+
+#score {
+    color: #5de7ff;
+}
+
+#wave {
+    color: #c77dff;
+}
+
+#combo {
+    color: #ffd85c;
+}
+
+#health {
+    color: #ff5478;
+}
+
+/* Spell label */
+
+#spellInfo {
+    position: absolute;
+    left: 25px;
+    bottom: 25px;
+    z-index: 5;
+
+    padding: 13px 18px;
+
+    border-radius: 15px;
+    border: 1px solid rgba(140,100,255,.3);
+
+    background: rgba(5,8,30,.72);
+    backdrop-filter: blur(12px);
+
+    color: #aaa9df;
+    font-size: 12px;
+    letter-spacing: 2px;
+}
+
+#spellInfo b {
+    color: #c875ff;
+}
+
+/* Instructions */
+
+#hint {
+    position: absolute;
+    right: 25px;
+    bottom: 25px;
+    z-index: 5;
+
+    padding: 13px 18px;
+    border-radius: 15px;
+
+    color: #65719b;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+
+    background: rgba(5,8,30,.55);
+}
+
+/* Overlay */
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        radial-gradient(circle at center,
+        rgba(38,12,83,.72),
+        rgba(1,3,14,.95));
+
+    backdrop-filter: blur(8px);
+}
+
+.panel {
+    width: min(90%, 560px);
+    padding: 45px;
+
+    text-align: center;
+
+    border: 1px solid rgba(155,110,255,.35);
+    border-radius: 28px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18,14,52,.94),
+            rgba(4,8,28,.94)
+        );
+
+    box-shadow:
+        0 0 80px rgba(110,50,255,.22),
+        inset 0 0 40px rgba(100,60,255,.04);
+
+    animation: panelIn .7s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes panelIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(.94);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.panel .symbol {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px;
+
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 48px;
+
+    background:
+        radial-gradient(circle,
+        #ffffff,
+        #b76cff 18%,
+        #6525ff 45%,
+        transparent 70%);
+
+    box-shadow:
+        0 0 30px #8c3cff,
+        0 0 80px rgba(120,50,255,.5);
+
+    animation: orb 2s infinite alternate ease-in-out;
+}
+
+@keyframes orb {
+    to {
+        transform: scale(1.08);
+        filter: hue-rotate(30deg);
+    }
+}
+
+.panel h1 {
+    font-size: clamp(38px, 7vw, 68px);
+    letter-spacing: 7px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #62eaff,
+            #b66cff,
+            #ff69cf
+        );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    text-shadow: 0 0 35px rgba(150,80,255,.3);
+}
+
+.panel h2 {
+    color: #ff679d;
+    letter-spacing: 5px;
+    margin-bottom: 12px;
+}
+
+.panel p {
+    color: #8c96ba;
+    line-height: 1.7;
+    margin: 12px 0 25px;
+}
+
+button {
+    border: 0;
+    padding: 15px 38px;
+
+    border-radius: 15px;
+
+    color: white;
+    font-weight: 800;
+    letter-spacing: 2px;
+
+    cursor: pointer;
+
+    background:
+        linear-gradient(
+            135deg,
+            #6635ff,
+            #c342ff
+        );
+
+    box-shadow:
+        0 0 25px rgba(133,60,255,.45);
+
+    transition:
+        transform .2s,
+        box-shadow .2s;
+}
+
+button:hover {
+    transform: translateY(-3px) scale(1.03);
+
+    box-shadow:
+        0 0 45px rgba(180,70,255,.7);
+}
+
+.hidden {
+    display: none;
+}
+
+/* Health bar */
+
+#healthBar {
+    position: absolute;
+    left: 50%;
+    top: 83px;
+    transform: translateX(-50%);
+
+    width: 240px;
+    height: 5px;
+
+    border-radius: 20px;
+    overflow: hidden;
+
+    background: rgba(255,255,255,.08);
+}
+
+#healthFill {
+    width: 100%;
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            #ff3769,
+            #ff7c9e
+        );
+
+    box-shadow: 0 0 12px #ff3769;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<canvas id="canvas"></canvas>
+
+<div id="hud">
+
+    <div class="stat">
+        <small>SCORE</small>
+        <strong id="score">0</strong>
+    </div>
+
+    <div class="stat">
+        <small>WAVE</small>
+        <strong id="wave">1</strong>
+    </div>
+
+    <div class="stat">
+        <small>COMBO</small>
+        <strong id="combo">x1</strong>
+    </div>
+
+    <div class="stat">
+        <small>HP</small>
+        <strong id="health">100</strong>
+    </div>
+
+</div>
+
+<div id="healthBar">
+    <div id="healthFill"></div>
+</div>
+
+<div id="spellInfo">
+    SPELL: <b>ARCANE FIRE</b>
+</div>
+
+<div id="hint">
+    AIM WITH MOUSE / TOUCH · CLICK TO CAST
+</div>
+
+<!-- Start -->
+
+<div class="overlay" id="startScreen">
+
+    <div class="panel">
+
+        <div class="symbol">✦</div>
+
+        <h1>ARCANE RIFT</h1>
+
+        <p>
+            Defend the realm from creatures emerging
+            from the dimensional rift.
+        </p>
+
+        <button id="startButton">
+            ENTER THE RIFT
+        </button>
+
+    </div>
+
+</div>
+
+<!-- Game over -->
+
+<div class="overlay hidden" id="gameOver">
+
+    <div class="panel">
+
+        <div class="symbol">☠</div>
+
+        <h2>RIFT OVERRUN</h2>
+
+        <h1 id="finalScore">0</h1>
+
+        <p>
+            The dimensional breach has consumed the arena.
+        </p>
+
+        <button id="restartButton">
+            CAST AGAIN
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+<script>
+/* =========================================================
+   ARCANE RIFT
+   Single-file Canvas arcade game
+   ========================================================= */
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const game = document.getElementById("game");
+
+const scoreEl = document.getElementById("score");
+const waveEl = document.getElementById("wave");
+const comboEl = document.getElementById("combo");
+const healthEl = document.getElementById("health");
+const healthFill = document.getElementById("healthFill");
+
+const startScreen = document.getElementById("startScreen");
+const gameOverScreen = document.getElementById("gameOver");
+const finalScore = document.getElementById("finalScore");
+
+let W = 0;
+let H = 0;
+let dpr = 1;
+
+/* ---------------------------------------------------------
+   Resize
+--------------------------------------------------------- */
+
+function resize() {
+
+    const rect = game.getBoundingClientRect();
+
+    W = rect.width;
+    H = rect.height;
+
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
+
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+window.addEventListener("resize", resize);
+resize();
+
+/* ---------------------------------------------------------
+   Game state
+--------------------------------------------------------- */
+
+let running = false;
+
+let score = 0;
+let wave = 1;
+let health = 100;
+let combo = 1;
+
+let enemies = [];
+let spells = [];
+let particles = [];
+let stars = [];
+let shockwaves = [];
+let texts = [];
+
+let spawnTimer = 0;
+let spawnDelay = 1300;
+
+let lastTime = performance.now();
+
+let shake = 0;
+
+/* ---------------------------------------------------------
+   Mouse / touch
+--------------------------------------------------------- */
+
+let pointer = {
+    x: W / 2,
+    y: H / 2
+};
+
+function updatePointer(e) {
+
+    const rect = canvas.getBoundingClientRect();
+
+    pointer.x = e.clientX - rect.left;
+    pointer.y = e.clientY - rect.top;
+}
+
+canvas.addEventListener("pointermove", updatePointer);
+
+canvas.addEventListener("pointerdown", e => {
+
+    updatePointer(e);
+
+    if (running) {
+        castSpell(pointer.x, pointer.y);
+    }
+});
+
+/* ---------------------------------------------------------
+   Keyboard
+--------------------------------------------------------- */
+
+window.addEventListener("keydown", e => {
+
+    if (e.code === "Space") {
+
+        e.preventDefault();
+
+        if (running) {
+            castSpell(pointer.x, pointer.y);
+        }
+    }
+});
+
+/* ---------------------------------------------------------
+   Start / restart
+--------------------------------------------------------- */
+
+document.getElementById("startButton").onclick = startGame;
+document.getElementById("restartButton").onclick = startGame;
+
+function startGame() {
+
+    running = true;
+
+    score = 0;
+    wave = 1;
+    health = 100;
+    combo = 1;
+
+    enemies.length = 0;
+    spells.length = 0;
+    particles.length = 0;
+    shockwaves.length = 0;
+    texts.length = 0;
+
+    spawnTimer = 0;
+    spawnDelay = 1200;
+
+    startScreen.classList.add("hidden");
+    gameOverScreen.classList.add("hidden");
+
+    updateHUD();
+}
+
+/* ---------------------------------------------------------
+   Game over
+--------------------------------------------------------- */
+
+function endGame() {
+
+    running = false;
+
+    finalScore.textContent = score;
+
+    gameOverScreen.classList.remove("hidden");
+
+    shake = 18;
+
+    burst(
+        W / 2,
+        H * .55,
+        "#b84cff",
+        100,
+        9
+    );
+}
+
+/* ---------------------------------------------------------
+   Stars
+--------------------------------------------------------- */
+
+function createStars() {
+
+    stars.length = 0;
+
+    for (let i = 0; i < 180; i++) {
+
+        stars.push({
+            x: Math.random() * W,
+            y: Math.random() * H,
+            size: Math.random() * 2 + .3,
+            speed: Math.random() * .35 + .05,
+            alpha: Math.random()
+        });
+    }
+}
+
+createStars();
+
+/* ---------------------------------------------------------
+   Background
+--------------------------------------------------------- */
+
+function drawBackground(dt) {
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, H);
+
+    gradient.addColorStop(0, "#02040f");
+    gradient.addColorStop(.45, "#07112d");
+    gradient.addColorStop(1, "#10051f");
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, W, H);
+
+    /* Nebula */
+
+    const nebula = ctx.createRadialGradient(
+        W * .5,
+        H * .6,
+        20,
+        W * .5,
+        H * .6,
+        H * .7
+    );
+
+    nebula.addColorStop(0, "rgba(125,40,255,.12)");
+    nebula.addColorStop(.5, "rgba(30,100,255,.04)");
+    nebula.addColorStop(1, "transparent");
+
+    ctx.fillStyle = nebula;
+    ctx.fillRect(0, 0, W, H);
+
+    /* Stars */
+
+    for (const s of stars) {
+
+        s.y += s.speed * dt * .04;
+
+        if (s.y > H) {
+            s.y = 0;
+            s.x = Math.random() * W;
+        }
+
+        const twinkle =
+            .45 +
+            Math.sin(performance.now() * .002 + s.alpha * 10) * .35;
+
+        ctx.globalAlpha = twinkle;
+
+        ctx.fillStyle = "#b8dcff";
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+
+    /* Rift */
+
+    const r = 100 + Math.sin(performance.now() * .002) * 15;
+
+    const rg = ctx.createRadialGradient(
+        W / 2,
+        H * .43,
+        5,
+        W / 2,
+        H * .43,
+        r
+    );
+
+    rg.addColorStop(0, "rgba(255,255,255,.18)");
+    rg.addColorStop(.2, "rgba(145,50,255,.12)");
+    rg.addColorStop(.55, "rgba(70,20,255,.06)");
+    rg.addColorStop(1, "transparent");
+
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(W / 2, H * .43, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawMagicCircle(
+        W / 2,
+        H * .43,
+        85,
+        performance.now() * .0005
+    );
+}
+
+/* ---------------------------------------------------------
+   Magic circle
+--------------------------------------------------------- */
+
+function drawMagicCircle(x, y, radius, rotation) {
+
+    ctx.save();
+
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+
+    ctx.strokeStyle = "rgba(125,100,255,.17)";
+    ctx.lineWidth = 1;
+
+    ctx.shadowColor = "#673cff";
+    ctx.shadowBlur = 12;
+
+    for (let i = 0; i < 3; i++) {
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            radius - i * 13,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.stroke();
+    }
+
+    for (let i = 0; i < 12; i++) {
+
+        const a = i * Math.PI / 6;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            Math.cos(a) * 45,
+            Math.sin(a) * 45
+        );
+
+        ctx.lineTo(
+            Math.cos(a) * radius,
+            Math.sin(a) * radius
+        );
+
+        ctx.stroke();
+    }
+
+    ctx.restore();
+}
+
+/* ---------------------------------------------------------
+   Wizard
+--------------------------------------------------------- */
+
+function drawWizard() {
+
+    const x = W / 2;
+    const y = H - 95;
+
+    const pulse =
+        1 +
+        Math.sin(performance.now() * .004) * .04;
+
+    /* Aura */
+
+    const aura = ctx.createRadialGradient(
+        x,
+        y,
+        10,
+        x,
+        y,
+        90
+    );
+
+    aura.addColorStop(0, "rgba(180,90,255,.32)");
+    aura.addColorStop(1, "transparent");
+
+    ctx.fillStyle = aura;
+    ctx.beginPath();
+    ctx.arc(x, y, 90, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Circle */
+
+    drawMagicCircle(
+        x,
+        y + 20,
+        65,
+        performance.now() * -.001
+    );
+
+    ctx.save();
+
+    ctx.translate(x, y);
+    ctx.scale(pulse, pulse);
+
+    /* Cloak */
+
+    const cloak = ctx.createLinearGradient(
+        0,
+        -20,
+        0,
+        60
+    );
+
+    cloak.addColorStop(0, "#713cff");
+    cloak.addColorStop(1, "#160b43");
+
+    ctx.fillStyle = cloak;
+
+    ctx.beginPath();
+    ctx.moveTo(-35, 50);
+    ctx.lineTo(-22, -8);
+    ctx.quadraticCurveTo(0, -25, 22, -8);
+    ctx.lineTo(35, 50);
+    ctx.closePath();
+    ctx.fill();
+
+    /* Head */
+
+    ctx.fillStyle = "#ffd0a6";
+
+    ctx.beginPath();
+    ctx.arc(0, -20, 17, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Hood */
+
+    ctx.fillStyle = "#28106d";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        -22,
+        25,
+        Math.PI,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+    /* Staff */
+
+    ctx.save();
+
+    ctx.rotate(
+        Math.atan2(
+            pointer.y - y,
+            pointer.x - x
+        ) + Math.PI / 2
+    );
+
+    ctx.strokeStyle = "#6c4933";
+    ctx.lineWidth = 7;
+
+    ctx.beginPath();
+    ctx.moveTo(35, 45);
+    ctx.lineTo(35, -55);
+    ctx.stroke();
+
+    ctx.fillStyle = "#8f5cff";
+    ctx.shadowColor = "#a45cff";
+    ctx.shadowBlur = 25;
+
+    ctx.beginPath();
+    ctx.arc(35, -60, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    ctx.restore();
+}
+
+/* ---------------------------------------------------------
+   Aim guide
+--------------------------------------------------------- */
+
+function drawAimGuide() {
+
+    if (!running) return;
+
+    const sx = W / 2;
+    const sy = H - 115;
+
+    const dx = pointer.x - sx;
+    const dy = pointer.y - sy;
+
+    const length = Math.sqrt(dx * dx + dy * dy);
+
+    if (length < 10) return;
+
+    const nx = dx / length;
+    const ny = dy / length;
+
+    ctx.save();
+
+    ctx.setLineDash([5, 10]);
+
+    ctx.lineWidth = 2;
+
+    ctx.strokeStyle = "rgba(150,100,255,.35)";
+
+    ctx.shadowColor = "#8f4cff";
+    ctx.shadowBlur = 12;
+
+    ctx.beginPath();
+
+    ctx.moveTo(sx, sy);
+
+    ctx.lineTo(
+        sx + nx * 450,
+        sy + ny * 450
+    );
+
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+/* ---------------------------------------------------------
+   Cast spell
+--------------------------------------------------------- */
+
+function castSpell(tx, ty) {
+
+    const sx = W / 2;
+    const sy = H - 120;
+
+    const dx = tx - sx;
+    const dy = ty - sy;
+
+    const len = Math.sqrt(dx * dx + dy * dy);
+
+    if (len < 15) return;
+
+    const speed = 11;
+
+    spells.push({
+
+        x: sx,
+        y: sy,
+
+        vx: dx / len * speed,
+        vy: dy / len * speed,
+
+        radius: 9,
+
+        life: 0,
+        maxLife: 180,
+
+        color: "#c45cff"
+    });
+
+    burst(
+        sx,
+        sy,
+        "#a85cff",
+        8,
+        3
+    );
+}
+
+/* ---------------------------------------------------------
+   Spell drawing
+--------------------------------------------------------- */
+
+function drawSpell(s) {
+
+    const glow = ctx.createRadialGradient(
+        s.x,
+        s.y,
+        1,
+        s.x,
+        s.y,
+        28
+    );
+
+    glow.addColorStop(0, "#fff");
+    glow.addColorStop(.15, "#e6a2ff");
+    glow.addColorStop(.4, "#a638ff");
+    glow.addColorStop(1, "transparent");
+
+    ctx.fillStyle = glow;
+
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 28, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fff";
+
+    ctx.shadowColor = "#c040ff";
+    ctx.shadowBlur = 20;
+
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+}
+
+/* ---------------------------------------------------------
+   Enemies
+--------------------------------------------------------- */
+
+function spawnEnemy() {
+
+    const type = Math.random();
+
+    let enemy;
+
+    if (type < .5) {
+
+        enemy = {
+            type: "wraith",
+            radius: 25,
+            hp: 1,
+            speed: 1.0 + wave * .05,
+            color: "#8f4cff"
+        };
+
+    } else {
+
+        enemy = {
+            type: "demon",
+            radius: 30,
+            hp: 2,
+            speed: .75 + wave * .045,
+            color: "#ff416d"
+        };
+    }
+
+    enemy.x = 80 + Math.random() * (W - 160);
+    enemy.y = -50;
+
+    enemy.phase = Math.random() * Math.PI * 2;
+
+    enemy.targetY =
+        H * (.25 + Math.random() * .38);
+
+    enemies.push(enemy);
+}
+
+/* ---------------------------------------------------------
+   Draw enemy
+--------------------------------------------------------- */
+
+function drawEnemy(e) {
+
+    const pulse =
+        1 +
+        Math.sin(performance.now() * .004 + e.phase) * .06;
+
+    ctx.save();
+
+    ctx.translate(e.x, e.y);
+    ctx.scale(pulse, pulse);
+
+    /* Aura */
+
+    const aura = ctx.createRadialGradient(
+        0,
+        0,
+        2,
+        0,
+        0,
+        e.radius * 2.2
+    );
+
+    aura.addColorStop(
+        0,
+        e.color.replace(")", ",.3)").replace("rgb", "rgba")
+    );
+
+    aura.addColorStop(1, "transparent");
+
+    ctx.fillStyle = aura;
+
+    ctx.beginPath();
+    ctx.arc(0, 0, e.radius * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Body */
+
+    const body = ctx.createRadialGradient(
+        -7,
+        -8,
+        2,
+        0,
+        0,
+        e.radius
+    );
+
+    body.addColorStop(0, "#fff");
+    body.addColorStop(.15, e.color);
+    body.addColorStop(1, "#170624");
+
+    ctx.fillStyle = body;
+
+    ctx.shadowColor = e.color;
+    ctx.shadowBlur = 25;
+
+    ctx.beginPath();
+    ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    /* Eyes */
+
+    ctx.fillStyle = "#fff";
+
+    ctx.beginPath();
+    ctx.arc(-8, -5, 5, 0, Math.PI * 2);
+    ctx.arc(8, -5, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#15001e";
+
+    ctx.beginPath();
+    ctx.arc(-8, -5, 2, 0, Math.PI * 2);
+    ctx.arc(8, -5, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Horns */
+
+    if (e.type === "demon") {
+
+        ctx.fillStyle = "#ff597d";
+
+        ctx.beginPath();
+
+        ctx.moveTo(-18, -20);
+        ctx.lineTo(-30, -39);
+        ctx.lineTo(-5, -27);
+
+        ctx.moveTo(18, -20);
+        ctx.lineTo(30, -39);
+        ctx.lineTo(5, -27);
+
+        ctx.fill();
+    }
+
+    ctx.restore();
+}
+
+/* ---------------------------------------------------------
+   Particles
+--------------------------------------------------------- */
+
+function burst(x, y, color, count = 25, speed = 5) {
+
+    for (let i = 0; i < count; i++) {
+
+        const angle =
+            Math.random() * Math.PI * 2;
+
+        const velocity =
+            Math.random() * speed + 1;
+
+        particles.push({
+
+            x,
+            y,
+
+            vx: Math.cos(angle) * velocity,
+            vy: Math.sin(angle) * velocity,
+
+            life: 1,
+
+            size:
+                Math.random() * 4 + 1,
+
+            color
+        });
+    }
+}
+
+/* ---------------------------------------------------------
+   Shockwave
+--------------------------------------------------------- */
+
+function shockwave(x, y, color) {
+
+    shockwaves.push({
+        x,
+        y,
+        radius: 5,
+        alpha: 1,
+        color
+    });
+}
+
+/* ---------------------------------------------------------
+   Floating text
+--------------------------------------------------------- */
+
+function floatingText(x, y, text, color) {
+
+    texts.push({
+        x,
+        y,
+        text,
+        color,
+        life: 1
+    });
+}
+
+/* ---------------------------------------------------------
+   Collision
+--------------------------------------------------------- */
+
+function hitTest(a, b) {
+
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+
+    const distance =
+        Math.sqrt(dx * dx + dy * dy);
+
+    return distance <
+        a.radius + b.radius;
+}
+
+/* ---------------------------------------------------------
+   Update spells
+--------------------------------------------------------- */
+
+function updateSpells(dt) {
+
+    for (let i = spells.length - 1; i >= 0; i--) {
+
+        const s = spells[i];
+
+        s.x += s.vx * dt * .06;
+        s.y += s.vy * dt * .06;
+
+        s.life += dt * .06;
+
+        /* Trail */
+
+        particles.push({
+
+            x: s.x - s.vx * .8,
+            y: s.y - s.vy * .8,
+
+            vx: 0,
+            vy: 0,
+
+            life: .55,
+
+            size: Math.random() * 3 + 1,
+
+            color:
+                Math.random() > .5
+                ? "#d15cff"
+                : "#6feaff"
+        });
+
+        if (
+            s.life > s.maxLife ||
+            s.x < -50 ||
+            s.x > W + 50 ||
+            s.y < -50 ||
+            s.y > H + 50
+        ) {
+
+            spells.splice(i, 1);
+            continue;
+        }
+
+        /* Enemy collision */
+
+        for (let j = enemies.length - 1; j >= 0; j--) {
+
+            const e = enemies[j];
+
+            if (hitTest(s, e)) {
+
+                e.hp--;
+
+                burst(
+                    e.x,
+                    e.y,
+                    e.color,
+                    28,
+                    7
+                );
+
+                shockwave(
+                    e.x,
+                    e.y,
+                    e.color
+                );
+
+                spells.splice(i, 1);
+
+                if (e.hp <= 0) {
+
+                    enemies.splice(j, 1);
+
+                    const points =
+                        100 * combo;
+
+                    score += points;
+
+                    combo = Math.min(
+                        combo + .2,
+                        10
+                    );
+
+                    floatingText(
+                        e.x,
+                        e.y,
+                        "+" + points,
+                        "#ffd75c"
+                    );
+                }
+
+                break;
+            }
+        }
+    }
+}
+
+/* ---------------------------------------------------------
+   Update enemies
+--------------------------------------------------------- */
+
+function updateEnemies(dt) {
+
+    for (let i = enemies.length - 1; i >= 0; i--) {
+
+        const e = enemies[i];
+
+        e.y +=
+            e.speed *
+            dt *
+            .06;
+
+        e.x +=
+            Math.sin(
+                performance.now() * .0015 +
+                e.phase
+            ) *
+            .5;
+
+        if (e.y > H - 170) {
+
+            enemies.splice(i, 1);
+
+            health -= 15;
+
+            combo = 1;
+
+            shake = 10;
+
+            burst(
+                e.x,
+                H - 170,
+                "#ff3f69",
+                25,
+                6
+            );
+
+            updateHUD();
+
+            if (health <= 0) {
+                health = 0;
+                endGame();
+            }
+        }
+    }
+}
+
+/* ---------------------------------------------------------
+   Update particles
+--------------------------------------------------------- */
+
+function updateParticles(dt) {
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+
+        const p = particles[i];
+
+        p.x += p.vx * dt * .06;
+        p.y += p.vy * dt * .06;
+
+        p.vy += .08 * dt;
+
+        p.life -= .018 * dt;
+
+        if (p.life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
+/* ---------------------------------------------------------
+   Draw particles
+--------------------------------------------------------- */
+
+function drawParticles() {
+
+    for (const p of particles) {
+
+        ctx.globalAlpha =
+            Math.max(0, p.life);
+
+        ctx.fillStyle = p.color;
+
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 10;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            p.size * p.life,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+}
+
+/* ---------------------------------------------------------
+   Shockwaves
+--------------------------------------------------------- */
+
+function updateShockwaves(dt) {
+
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+
+        const s = shockwaves[i];
+
+        s.radius += dt * .15;
+        s.alpha -= dt * .002;
+
+        if (s.alpha <= 0) {
+            shockwaves.splice(i, 1);
+        }
+    }
+}
+
+function drawShockwaves() {
+
+    for (const s of shockwaves) {
+
+        ctx.globalAlpha = s.alpha;
+
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 3;
+
+        ctx.shadowColor = s.color;
+        ctx.shadowBlur = 15;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            s.x,
+            s.y,
+            s.radius,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.stroke();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+}
+
+/* ---------------------------------------------------------
+   Floating text
+--------------------------------------------------------- */
+
+function updateTexts(dt) {
+
+    for (let i = texts.length - 1; i >= 0; i--) {
+
+        const t = texts[i];
+
+        t.y -= dt * .035;
+        t.life -= dt * .0015;
+
+        if (t.life <= 0) {
+            texts.splice(i, 1);
+        }
+    }
+}
+
+function drawTexts() {
+
+    for (const t of texts) {
+
+        ctx.globalAlpha = t.life;
+
+        ctx.fillStyle = t.color;
+
+        ctx.font = "bold 20px Arial";
+        ctx.textAlign = "center";
+
+        ctx.shadowColor = t.color;
+        ctx.shadowBlur = 15;
+
+        ctx.fillText(
+            t.text,
+            t.x,
+            t.y
+        );
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+}
+
+/* ---------------------------------------------------------
+   Wave progression
+--------------------------------------------------------- */
+
+function updateWave() {
+
+    const newWave =
+        Math.floor(score / 1000) + 1;
+
+    if (newWave > wave) {
+
+        wave = newWave;
+
+        spawnDelay =
+            Math.max(
+                420,
+                1200 - wave * 55
+            );
+
+        floatingText(
+            W / 2,
+            H * .35,
+            "WAVE " + wave,
+            "#b86cff"
+        );
+
+        burst(
+            W / 2,
+            H * .43,
+            "#9c55ff",
+            60,
+            7
+        );
+    }
+}
+
+/* ---------------------------------------------------------
+   HUD
+--------------------------------------------------------- */
+
+function updateHUD() {
+
+    scoreEl.textContent = score;
+    waveEl.textContent = wave;
+    comboEl.textContent =
+        "x" + combo.toFixed(1);
+
+    healthEl.textContent =
+        Math.max(0, Math.round(health));
+
+    healthFill.style.width =
+        Math.max(0, health) + "%";
+}
+
+/* ---------------------------------------------------------
+   Main update
+--------------------------------------------------------- */
+
+function update(dt) {
+
+    if (!running) return;
+
+    spawnTimer += dt;
+
+    if (spawnTimer >= spawnDelay) {
+
+        spawnTimer = 0;
+
+        spawnEnemy();
+
+        /* Extra enemies at high waves */
+
+        if (wave >= 4 && Math.random() < .2) {
+            spawnEnemy();
+        }
+
+        if (wave >= 8 && Math.random() < .15) {
+            spawnEnemy();
+        }
+    }
+
+    updateSpells(dt);
+    updateEnemies(dt);
+    updateParticles(dt);
+    updateShockwaves(dt);
+    updateTexts(dt);
+
+    updateWave();
+
+    /* Slowly recover combo when nothing happens */
+
+    combo = Math.max(
+        1,
+        combo - dt * .00004
+    );
+
+    updateHUD();
+}
+
+/* ---------------------------------------------------------
+   Main draw
+--------------------------------------------------------- */
+
+function draw(dt) {
+
+    ctx.save();
+
+    /* Screen shake */
+
+    if (shake > 0) {
+
+        ctx.translate(
+            (Math.random() - .5) * shake,
+            (Math.random() - .5) * shake
+        );
+
+        shake *= .9;
+
+        if (shake < .1) {
+            shake = 0;
+        }
+    }
+
+    drawBackground(dt);
+
+    drawAimGuide();
+
+    /* Enemies */
+
+    for (const e of enemies) {
+        drawEnemy(e);
+    }
+
+    /* Spells */
+
+    for (const s of spells) {
+        drawSpell(s);
+    }
+
+    drawParticles();
+    drawShockwaves();
+    drawWizard();
+    drawTexts();
+
+    ctx.restore();
+}
+
+/* ---------------------------------------------------------
+   Game loop
+--------------------------------------------------------- */
+
+function loop(now) {
+
+    const dt =
+        Math.min(
+            now - lastTime,
+            32
+        );
+
+    lastTime = now;
+
+    update(dt);
+    draw(dt);
+
+    requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+/* ---------------------------------------------------------
+   Keep pointer centered after resize
+--------------------------------------------------------- */
+
+window.addEventListener("resize", () => {
+
+    pointer.x = W / 2;
+    pointer.y = H / 2;
+
+    createStars();
+});
+
+/* ---------------------------------------------------------
+   Prevent context menu on game
+--------------------------------------------------------- */
+
+canvas.addEventListener(
+    "contextmenu",
+    e => e.preventDefault()
+);
+
+</script>
+
+</body>
+</html>

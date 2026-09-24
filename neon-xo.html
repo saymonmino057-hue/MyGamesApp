@@ -1,0 +1,1397 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Neon X-O</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --bg:#050812;
+  --panel:rgba(12,19,38,.72);
+  --line:rgba(255,255,255,.10);
+  --cyan:#35e9ff;
+  --pink:#ff4d9d;
+  --purple:#9568ff;
+  --text:#f5f8ff;
+  --muted:#8290ad;
+}
+
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  font-family:Inter,system-ui,Arial,sans-serif;
+  color:var(--text);
+  background:var(--bg);
+}
+
+body{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+#game{
+  position:relative;
+  width:min(560px,100vw);
+  height:min(900px,100vh);
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 15% 15%,rgba(53,233,255,.12),transparent 30%),
+    radial-gradient(circle at 85% 80%,rgba(255,77,157,.12),transparent 30%),
+    linear-gradient(145deg,#030611,#091226 60%,#050812);
+}
+
+canvas#stars{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
+
+.app{
+  position:relative;
+  z-index:2;
+  width:100%;
+  height:100%;
+  padding:22px;
+  display:flex;
+  flex-direction:column;
+}
+
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo{
+  width:45px;
+  height:45px;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  font-size:23px;
+  font-weight:900;
+  color:var(--cyan);
+  background:rgba(53,233,255,.08);
+  border:1px solid rgba(53,233,255,.25);
+  box-shadow:0 0 25px rgba(53,233,255,.12);
+}
+
+.title{
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:2px;
+}
+
+.subtitle{
+  color:var(--muted);
+  font-size:10px;
+  letter-spacing:2px;
+  margin-top:2px;
+}
+
+.modeSelect{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.045);
+  color:white;
+  padding:10px 12px;
+  border-radius:12px;
+  outline:none;
+  cursor:pointer;
+}
+
+.modeSelect option{
+  background:#0b1123;
+}
+
+.scoreboard{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:9px;
+  margin-top:22px;
+}
+
+.scoreCard{
+  padding:13px 8px;
+  text-align:center;
+  border:1px solid var(--line);
+  border-radius:17px;
+  background:var(--panel);
+  backdrop-filter:blur(15px);
+  box-shadow:0 12px 30px rgba(0,0,0,.16);
+  transition:.25s;
+}
+
+.scoreCard.active{
+  transform:translateY(-3px);
+  border-color:rgba(255,255,255,.22);
+  box-shadow:0 0 25px rgba(53,233,255,.08);
+}
+
+.scoreLabel{
+  color:var(--muted);
+  font-size:9px;
+  letter-spacing:2px;
+}
+
+.scoreValue{
+  font-size:27px;
+  font-weight:900;
+  margin-top:4px;
+}
+
+.xColor{color:var(--cyan)}
+.oColor{color:var(--pink)}
+.tieColor{color:#b895ff}
+
+.status{
+  margin:20px auto 14px;
+  min-height:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  color:#b8c4dd;
+  font-size:13px;
+}
+
+.turnDot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 14px var(--cyan);
+}
+
+.boardWrap{
+  position:relative;
+  width:min(480px,88vw);
+  aspect-ratio:1;
+  margin:auto;
+  display:grid;
+  place-items:center;
+}
+
+.boardGlow{
+  position:absolute;
+  inset:-15px;
+  border-radius:35px;
+  background:
+    radial-gradient(circle,
+      rgba(53,233,255,.12),
+      transparent 68%);
+  filter:blur(15px);
+}
+
+.board{
+  position:relative;
+  width:100%;
+  height:100%;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(3,1fr);
+  gap:10px;
+  padding:10px;
+  border-radius:29px;
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.08),
+      rgba(255,255,255,.025));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.08),
+    0 25px 70px rgba(0,0,0,.35);
+}
+
+.cell{
+  position:relative;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:21px;
+  background:
+    linear-gradient(145deg,
+      rgba(255,255,255,.075),
+      rgba(255,255,255,.025));
+  cursor:pointer;
+  overflow:hidden;
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease;
+}
+
+.cell:hover:not(.filled){
+  transform:translateY(-3px) scale(1.015);
+  background:rgba(53,233,255,.07);
+  border-color:rgba(53,233,255,.25);
+}
+
+.cell::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 30% 20%,
+      rgba(255,255,255,.10),
+      transparent 28%);
+  pointer-events:none;
+}
+
+.mark{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  font-size:clamp(48px,13vw,92px);
+  font-weight:900;
+  animation:markIn .35s cubic-bezier(.2,.9,.2,1);
+}
+
+.mark.x{
+  color:var(--cyan);
+  text-shadow:
+    0 0 10px rgba(53,233,255,.9),
+    0 0 30px rgba(53,233,255,.55),
+    0 0 60px rgba(53,233,255,.25);
+}
+
+.mark.o{
+  color:var(--pink);
+  text-shadow:
+    0 0 10px rgba(255,77,157,.9),
+    0 0 30px rgba(255,77,157,.55),
+    0 0 60px rgba(255,77,157,.25);
+}
+
+@keyframes markIn{
+  from{
+    opacity:0;
+    transform:scale(.2) rotate(-15deg);
+  }
+  65%{
+    transform:scale(1.15);
+  }
+  to{
+    opacity:1;
+    transform:scale(1);
+  }
+}
+
+.winCell{
+  animation:winPulse .75s ease-in-out infinite alternate;
+}
+
+@keyframes winPulse{
+  from{
+    box-shadow:inset 0 0 0 rgba(255,255,255,0);
+  }
+  to{
+    box-shadow:
+      inset 0 0 30px rgba(255,255,255,.12),
+      0 0 25px rgba(53,233,255,.15);
+  }
+}
+
+.winLine{
+  position:absolute;
+  z-index:8;
+  height:5px;
+  border-radius:99px;
+  transform-origin:left center;
+  pointer-events:none;
+  background:linear-gradient(
+    90deg,
+    var(--cyan),
+    #fff,
+    var(--pink)
+  );
+  box-shadow:
+    0 0 8px #fff,
+    0 0 20px var(--cyan),
+    0 0 35px var(--pink);
+  animation:lineDraw .55s cubic-bezier(.2,.9,.2,1) forwards;
+}
+
+@keyframes lineDraw{
+  from{
+    transform:scaleX(0);
+  }
+  to{
+    transform:scaleX(1);
+  }
+}
+
+.actions{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin:22px 0 8px;
+}
+
+.action{
+  border:1px solid var(--line);
+  color:white;
+  background:rgba(255,255,255,.05);
+  border-radius:14px;
+  padding:12px 18px;
+  cursor:pointer;
+  font-weight:800;
+  transition:.2s;
+}
+
+.action:hover{
+  transform:translateY(-2px);
+  border-color:rgba(53,233,255,.3);
+  background:rgba(53,233,255,.08);
+}
+
+.action.primary{
+  border-color:rgba(53,233,255,.3);
+  background:linear-gradient(
+    135deg,
+    rgba(53,233,255,.16),
+    rgba(149,104,255,.12)
+  );
+}
+
+.help{
+  text-align:center;
+  color:#52617c;
+  font-size:10px;
+  letter-spacing:1px;
+  margin-bottom:5px;
+}
+
+/* Modal */
+
+.modal{
+  position:absolute;
+  inset:0;
+  z-index:30;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:25px;
+  background:rgba(1,5,13,.64);
+  backdrop-filter:blur(14px);
+}
+
+.modal.show{
+  display:flex;
+  animation:fadeIn .25s ease;
+}
+
+.modalCard{
+  width:min(390px,100%);
+  padding:34px 25px;
+  text-align:center;
+  border-radius:29px;
+  background:
+    linear-gradient(145deg,
+      rgba(18,29,54,.96),
+      rgba(5,10,23,.97));
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.55);
+  animation:modalIn .4s cubic-bezier(.2,.9,.2,1);
+}
+
+@keyframes modalIn{
+  from{
+    opacity:0;
+    transform:translateY(25px) scale(.9);
+  }
+  to{
+    opacity:1;
+    transform:none;
+  }
+}
+
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+.modalIcon{
+  font-size:52px;
+  margin-bottom:12px;
+}
+
+.modal h2{
+  font-size:32px;
+  margin-bottom:7px;
+}
+
+.modal p{
+  color:#8998b3;
+  font-size:13px;
+  margin-bottom:22px;
+}
+
+.modalButtons{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+}
+
+@media(max-height:700px){
+  .app{padding:14px}
+  .scoreboard{margin-top:12px}
+  .status{margin:10px auto}
+  .actions{margin:12px 0 5px}
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<canvas id="stars"></canvas>
+
+<div class="app">
+
+<header>
+
+  <div class="brand">
+    <div class="logo">XO</div>
+    <div>
+      <div class="title">NEON X-O</div>
+      <div class="subtitle">FUTURISTIC ARENA</div>
+    </div>
+  </div>
+
+  <select id="mode" class="modeSelect">
+    <option value="ai">VS SMART AI</option>
+    <option value="local">2 PLAYERS</option>
+  </select>
+
+</header>
+
+<section class="scoreboard">
+
+  <div class="scoreCard active" id="xCard">
+    <div class="scoreLabel">PLAYER X</div>
+    <div class="scoreValue xColor" id="xScore">0</div>
+  </div>
+
+  <div class="scoreCard" id="tieCard">
+    <div class="scoreLabel">TIES</div>
+    <div class="scoreValue tieColor" id="tieScore">0</div>
+  </div>
+
+  <div class="scoreCard" id="oCard">
+    <div class="scoreLabel">PLAYER O</div>
+    <div class="scoreValue oColor" id="oScore">0</div>
+  </div>
+
+</section>
+
+<div class="status">
+  <span class="turnDot" id="turnDot"></span>
+  <span id="statusText">Your turn — X</span>
+</div>
+
+<div class="boardWrap">
+
+  <div class="boardGlow"></div>
+
+  <div class="board" id="board">
+    <button class="cell" data-index="0"></button>
+    <button class="cell" data-index="1"></button>
+    <button class="cell" data-index="2"></button>
+    <button class="cell" data-index="3"></button>
+    <button class="cell" data-index="4"></button>
+    <button class="cell" data-index="5"></button>
+    <button class="cell" data-index="6"></button>
+    <button class="cell" data-index="7"></button>
+    <button class="cell" data-index="8"></button>
+  </div>
+
+</div>
+
+<div class="actions">
+  <button class="action primary" id="newRound">
+    NEW ROUND
+  </button>
+
+  <button class="action" id="resetScores">
+    RESET SCORE
+  </button>
+</div>
+
+<div class="help">
+  CLICK A CELL TO PLAY • SMART AI USES MINIMAX
+</div>
+
+</div>
+
+
+<div class="modal" id="modal">
+
+  <div class="modalCard">
+
+    <div class="modalIcon" id="modalIcon">⚡</div>
+
+    <h2 id="modalTitle">PLAYER X WINS</h2>
+
+    <p id="modalText">
+      Perfect move sequence.
+    </p>
+
+    <div class="modalButtons">
+
+      <button class="action primary" id="modalAgain">
+        PLAY AGAIN
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+</div>
+
+
+<script>
+"use strict";
+
+/* =========================================================
+   STAR BACKGROUND
+========================================================= */
+
+const starCanvas =
+  document.getElementById("stars");
+
+const starCtx =
+  starCanvas.getContext("2d");
+
+let stars = [];
+let sw = 0;
+let sh = 0;
+
+function resizeStars(){
+
+  const rect =
+    starCanvas.getBoundingClientRect();
+
+  const dpr =
+    Math.min(window.devicePixelRatio || 1,2);
+
+  sw = rect.width;
+  sh = rect.height;
+
+  starCanvas.width =
+    sw*dpr;
+
+  starCanvas.height =
+    sh*dpr;
+
+  starCtx.setTransform(
+    dpr,0,0,dpr,0,0
+  );
+
+  stars = [];
+
+  for(let i=0;i<90;i++){
+
+    stars.push({
+      x:Math.random()*sw,
+      y:Math.random()*sh,
+      r:Math.random()*1.5+.2,
+      speed:Math.random()*.35+.05,
+      alpha:Math.random()*.7+.2
+    });
+  }
+}
+
+function animateStars(){
+
+  starCtx.clearRect(
+    0,0,sw,sh
+  );
+
+  for(const s of stars){
+
+    s.y += s.speed;
+
+    if(s.y > sh)
+      s.y = -2;
+
+    starCtx.globalAlpha =
+      s.alpha;
+
+    starCtx.fillStyle =
+      "#9deeff";
+
+    starCtx.beginPath();
+
+    starCtx.arc(
+      s.x,
+      s.y,
+      s.r,
+      0,
+      Math.PI*2
+    );
+
+    starCtx.fill();
+  }
+
+  starCtx.globalAlpha=1;
+
+  requestAnimationFrame(
+    animateStars
+  );
+}
+
+window.addEventListener(
+  "resize",
+  resizeStars
+);
+
+resizeStars();
+animateStars();
+
+
+/* =========================================================
+   GAME
+========================================================= */
+
+const cells =
+  [...document.querySelectorAll(".cell")];
+
+const board =
+  document.getElementById("board");
+
+const mode =
+  document.getElementById("mode");
+
+const statusText =
+  document.getElementById("statusText");
+
+const turnDot =
+  document.getElementById("turnDot");
+
+const xCard =
+  document.getElementById("xCard");
+
+const oCard =
+  document.getElementById("oCard");
+
+const modal =
+  document.getElementById("modal");
+
+const modalIcon =
+  document.getElementById("modalIcon");
+
+const modalTitle =
+  document.getElementById("modalTitle");
+
+const modalText =
+  document.getElementById("modalText");
+
+const xScore =
+  document.getElementById("xScore");
+
+const oScore =
+  document.getElementById("oScore");
+
+const tieScore =
+  document.getElementById("tieScore");
+
+let boardState =
+  Array(9).fill("");
+
+let currentPlayer = "X";
+
+let gameActive = true;
+
+let scores = {
+  X: Number(localStorage.getItem("neonXO_X") || 0),
+  O: Number(localStorage.getItem("neonXO_O") || 0),
+  T: Number(localStorage.getItem("neonXO_T") || 0)
+};
+
+const WIN_PATTERNS = [
+  [0,1,2],
+  [3,4,5],
+  [6,7,8],
+  [0,3,6],
+  [1,4,7],
+  [2,5,8],
+  [0,4,8],
+  [2,4,6]
+];
+
+
+/* =========================================================
+   SCORE UI
+========================================================= */
+
+function updateScore(){
+
+  xScore.textContent =
+    scores.X;
+
+  oScore.textContent =
+    scores.O;
+
+  tieScore.textContent =
+    scores.T;
+}
+
+updateScore();
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function updateStatus(){
+
+  if(!gameActive)
+    return;
+
+  if(mode.value === "ai"){
+
+    if(currentPlayer === "X"){
+
+      statusText.textContent =
+        "Your turn — X";
+
+    }else{
+
+      statusText.textContent =
+        "AI is thinking — O";
+    }
+
+  }else{
+
+    statusText.textContent =
+      "Player " + currentPlayer + " turn";
+  }
+
+  turnDot.style.background =
+    currentPlayer === "X"
+      ? "var(--cyan)"
+      : "var(--pink)";
+
+  turnDot.style.boxShadow =
+    currentPlayer === "X"
+      ? "0 0 14px var(--cyan)"
+      : "0 0 14px var(--pink)";
+
+  xCard.classList.toggle(
+    "active",
+    currentPlayer === "X"
+  );
+
+  oCard.classList.toggle(
+    "active",
+    currentPlayer === "O"
+  );
+}
+
+
+/* =========================================================
+   RENDER BOARD
+========================================================= */
+
+function render(){
+
+  cells.forEach((cell,i)=>{
+
+    cell.innerHTML = "";
+
+    cell.classList.toggle(
+      "filled",
+      boardState[i] !== ""
+    );
+
+    if(boardState[i]){
+
+      const mark =
+        document.createElement("div");
+
+      mark.className =
+        "mark " +
+        boardState[i].toLowerCase();
+
+      mark.textContent =
+        boardState[i];
+
+      cell.appendChild(mark);
+    }
+  });
+}
+
+
+/* =========================================================
+   CLICK
+========================================================= */
+
+cells.forEach(cell=>{
+
+  cell.addEventListener(
+    "click",
+    ()=>{
+
+      if(!gameActive)
+        return;
+
+      if(boardState[cell.dataset.index])
+        return;
+
+      if(
+        mode.value === "ai" &&
+        currentPlayer === "O"
+      )
+        return;
+
+      makeMove(
+        Number(cell.dataset.index),
+        currentPlayer
+      );
+
+    }
+  );
+});
+
+
+/* =========================================================
+   MAKE MOVE
+========================================================= */
+
+function makeMove(index,player){
+
+  boardState[index] = player;
+
+  render();
+
+  /*
+     Tiny board impact animation.
+  */
+
+  const cell =
+    cells[index];
+
+  cell.animate(
+    [
+      {transform:"scale(.82)"},
+      {transform:"scale(1.08)"},
+      {transform:"scale(1)"}
+    ],
+    {
+      duration:300,
+      easing:"cubic-bezier(.2,.9,.2,1)"
+    }
+  );
+
+  const result =
+    evaluate(boardState);
+
+  if(result){
+
+    finishGame(result);
+
+    return;
+  }
+
+  currentPlayer =
+    player === "X" ? "O" : "X";
+
+  updateStatus();
+
+  /*
+     AI turn.
+  */
+
+  if(
+    mode.value === "ai" &&
+    currentPlayer === "O"
+  ){
+
+    setTimeout(
+      aiMove,
+      360
+    );
+  }
+}
+
+
+/* =========================================================
+   EVALUATE
+========================================================= */
+
+function evaluate(state){
+
+  for(const pattern of WIN_PATTERNS){
+
+    const [a,b,c] = pattern;
+
+    if(
+      state[a] &&
+      state[a] === state[b] &&
+      state[a] === state[c]
+    ){
+
+      return {
+        winner:state[a],
+        pattern
+      };
+    }
+  }
+
+  if(
+    state.every(Boolean)
+  ){
+
+    return {
+      winner:"T",
+      pattern:null
+    };
+  }
+
+  return null;
+}
+
+
+/* =========================================================
+   FINISH GAME
+========================================================= */
+
+function finishGame(result){
+
+  gameActive = false;
+
+  if(result.winner === "T"){
+
+    scores.T++;
+
+    localStorage.setItem(
+      "neonXO_T",
+      scores.T
+    );
+
+    updateScore();
+
+    showModal(
+      "🤝",
+      "IT'S A TIE",
+      "Both players matched perfectly."
+    );
+
+    return;
+  }
+
+  scores[result.winner]++;
+
+  localStorage.setItem(
+    "neonXO_" + result.winner,
+    scores[result.winner]
+  );
+
+  updateScore();
+
+  highlightWinner(
+    result.pattern
+  );
+
+  if(
+    mode.value === "ai" &&
+    result.winner === "O"
+  ){
+
+    showModal(
+      "🤖",
+      "AI WINS",
+      "The machine found the perfect line."
+    );
+
+  }else{
+
+    showModal(
+      result.winner === "X"
+        ? "⚡"
+        : "🔥",
+      "PLAYER " +
+        result.winner +
+        " WINS",
+      "Excellent move sequence."
+    );
+  }
+}
+
+
+/* =========================================================
+   WIN LINE
+========================================================= */
+
+function highlightWinner(pattern){
+
+  pattern.forEach(i=>{
+    cells[i].classList.add(
+      "winCell"
+    );
+  });
+
+  /*
+     Draw line based on the centers
+     of the winning cells.
+  */
+
+  requestAnimationFrame(()=>{
+
+    const first =
+      cells[pattern[0]]
+        .getBoundingClientRect();
+
+    const last =
+      cells[pattern[2]]
+        .getBoundingClientRect();
+
+    const boardRect =
+      board.getBoundingClientRect();
+
+    const x1 =
+      first.left +
+      first.width/2 -
+      boardRect.left;
+
+    const y1 =
+      first.top +
+      first.height/2 -
+      boardRect.top;
+
+    const x2 =
+      last.left +
+      last.width/2 -
+      boardRect.left;
+
+    const y2 =
+      last.top +
+      last.height/2 -
+      boardRect.top;
+
+    const dx =
+      x2-x1;
+
+    const dy =
+      y2-y1;
+
+    const length =
+      Math.sqrt(
+        dx*dx+dy*dy
+      );
+
+    const angle =
+      Math.atan2(dy,dx) *
+      180 /
+      Math.PI;
+
+    const line =
+      document.createElement("div");
+
+    line.className =
+      "winLine";
+
+    line.style.width =
+      length+"px";
+
+    line.style.left =
+      x1+"px";
+
+    line.style.top =
+      y1+"px";
+
+    line.style.transform =
+      "rotate("+angle+"deg) scaleX(0)";
+
+    board.appendChild(line);
+
+    requestAnimationFrame(()=>{
+      line.style.transform =
+        "rotate("+angle+"deg) scaleX(1)";
+    });
+  });
+}
+
+
+/* =========================================================
+   SMART AI — MINIMAX
+========================================================= */
+
+function aiMove(){
+
+  if(
+    !gameActive ||
+    currentPlayer !== "O"
+  )
+    return;
+
+  let bestScore = -Infinity;
+  let bestMove = -1;
+
+  for(let i=0;i<9;i++){
+
+    if(!boardState[i]){
+
+      boardState[i] = "O";
+
+      const score =
+        minimax(
+          boardState,
+          false,
+          0
+        );
+
+      boardState[i] = "";
+
+      if(score > bestScore){
+
+        bestScore = score;
+        bestMove = i;
+      }
+    }
+  }
+
+  if(bestMove !== -1){
+
+    makeMove(
+      bestMove,
+      "O"
+    );
+  }
+}
+
+
+function minimax(
+  state,
+  maximizing,
+  depth
+){
+
+  const result =
+    evaluate(state);
+
+  if(result){
+
+    if(result.winner === "O")
+      return 10-depth;
+
+    if(result.winner === "X")
+      return depth-10;
+
+    return 0;
+  }
+
+  if(maximizing){
+
+    let best = -Infinity;
+
+    for(let i=0;i<9;i++){
+
+      if(!state[i]){
+
+        state[i] = "O";
+
+        best =
+          Math.max(
+            best,
+            minimax(
+              state,
+              false,
+              depth+1
+            )
+          );
+
+        state[i] = "";
+      }
+    }
+
+    return best;
+
+  }else{
+
+    let best = Infinity;
+
+    for(let i=0;i<9;i++){
+
+      if(!state[i]){
+
+        state[i] = "X";
+
+        best =
+          Math.min(
+            best,
+            minimax(
+              state,
+              true,
+              depth+1
+            )
+          );
+
+        state[i] = "";
+      }
+    }
+
+    return best;
+  }
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+function showModal(
+  icon,
+  title,
+  text
+){
+
+  modalIcon.textContent = icon;
+  modalTitle.textContent = title;
+  modalText.textContent = text;
+
+  modal.classList.add("show");
+}
+
+
+/* =========================================================
+   NEW ROUND
+========================================================= */
+
+function newRound(){
+
+  boardState =
+    Array(9).fill("");
+
+  currentPlayer = "X";
+
+  gameActive = true;
+
+  cells.forEach(cell=>{
+    cell.classList.remove(
+      "winCell"
+    );
+  });
+
+  document
+    .querySelectorAll(".winLine")
+    .forEach(line=>{
+      line.remove();
+    });
+
+  modal.classList.remove(
+    "show"
+  );
+
+  render();
+  updateStatus();
+}
+
+document
+  .getElementById("newRound")
+  .addEventListener(
+    "click",
+    newRound
+  );
+
+document
+  .getElementById("modalAgain")
+  .addEventListener(
+    "click",
+    newRound
+  );
+
+
+/* =========================================================
+   RESET SCORE
+========================================================= */
+
+document
+  .getElementById("resetScores")
+  .addEventListener(
+    "click",
+    ()=>{
+
+      scores = {
+        X:0,
+        O:0,
+        T:0
+      };
+
+      localStorage.removeItem(
+        "neonXO_X"
+      );
+
+      localStorage.removeItem(
+        "neonXO_O"
+      );
+
+      localStorage.removeItem(
+        "neonXO_T"
+      );
+
+      updateScore();
+
+      newRound();
+    }
+  );
+
+
+/* =========================================================
+   MODE SWITCH
+========================================================= */
+
+mode.addEventListener(
+  "change",
+  ()=>{
+
+    newRound();
+
+    if(mode.value === "ai"){
+
+      statusText.textContent =
+        "Your turn — X";
+
+    }else{
+
+      statusText.textContent =
+        "Player X turn";
+    }
+  }
+);
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+render();
+updateStatus();
+
+</script>
+
+</body>
+</html>
+```

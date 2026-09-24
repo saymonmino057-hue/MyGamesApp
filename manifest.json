@@ -1,0 +1,15 @@
+{
+  "name": "GameVerse",
+  "short_name": "GameVerse",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#030008",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/fluency/96/controller.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    }
+  ]
+}

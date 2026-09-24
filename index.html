@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameVerse | مركز الألعاب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-void: #030008;
+    --panel-bg: rgba(13, 8, 26, 0.78);
+    --panel-border: rgba(0, 240, 255, 0.2);
+    --neon-pink: #ff0055;
+    --neon-cyan: #00f0ff;
+    --neon-yellow: #f3e600;
+    --neon-purple: #8000ff;
+    --text-main: #ffffff;
+    --text-muted: #94a3b8;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    font-family: "Cairo", sans-serif;
+    min-height: 100vh;
+    color: var(--text-main);
+    overflow-x: hidden;
+    background-color: var(--bg-void);
+    background-image: 
+        radial-gradient(circle at 10% 10%, rgba(128, 0, 255, 0.2), transparent 45%),
+        radial-gradient(circle at 90% 90%, rgba(0, 240, 255, 0.15), transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(255, 0, 85, 0.1), transparent 60%);
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, black 50%, transparent 90%);
+}
+
+.app { width: min(1450px, 94%); margin: auto; padding: 25px 0 60px; position: relative; z-index: 2; }
+
+.header {
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    padding: 18px 25px; margin-bottom: 35px; border: 1px solid var(--panel-border);
+    border-radius: 20px; background: var(--panel-bg); backdrop-filter: blur(20px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-icon {
+    width: 52px; height: 52px; display: grid; place-items: center; border-radius: 14px;
+    font-size: 26px; background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple));
+    box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+}
+.logo-text { font-family: "Orbitron", sans-serif; font-size: 22px; font-weight: 900; letter-spacing: 0.5px; }
+.logo-text span { display: block; font-family: "Cairo", sans-serif; font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+.search-box { position: relative; width: min(420px, 45vw); }
+.search-box input {
+    width: 100%; height: 50px; border: 1px solid rgba(255,255,255,.1); outline: none;
+    border-radius: 14px; padding: 0 50px 0 18px; color: white; font-family: inherit;
+    font-size: 14px; background: rgba(8, 4, 18, 0.8); transition: all 0.25s ease;
+}
+.search-box input:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+    background: rgba(0, 240, 255, 0.04);
+}
+.search-icon { position: absolute; right: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+html[dir="ltr"] .search-icon { right: auto; left: 18px; }
+html[dir="ltr"] .search-box input { padding: 0 18px 0 50px; }
+
+.hero {
+    position: relative; min-height: 350px; display: flex; align-items: center; padding: 45px;
+    border-radius: 24px; margin-bottom: 30px; border: 1px solid var(--panel-border);
+    background: linear-gradient(135deg, rgba(13, 8, 26, 0.9), rgba(20, 10, 40, 0.7)),
+                radial-gradient(circle at 80% 50%, rgba(128, 0, 255, 0.25), transparent 40%);
+    box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+    overflow: hidden;
+}
+.hero::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 40px; width: 100px; height: 3px;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 15px var(--neon-cyan);
+}
+.hero-content { position: relative; z-index: 2; max-width: 700px; }
+.hero-badge {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 100px;
+    font-size: 12px; font-weight: 700; color: var(--neon-cyan); background: rgba(0, 240, 255, 0.08);
+    border: 1px solid rgba(0, 240, 255, 0.25); margin-bottom: 18px;
+}
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink); }
+.hero h1 { font-family: "Orbitron", sans-serif; font-size: clamp(32px, 4.5vw, 60px); line-height: 1.1; font-weight: 900; margin-bottom: 18px; text-transform: uppercase; }
+.gradient-text {
+    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-yellow), var(--neon-pink));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+}
+.hero p { color: var(--text-muted); font-size: 15px; line-height: 1.8; }
+.hero-buttons { display: flex; gap: 14px; margin-top: 25px; }
+.primary-btn, .secondary-btn {
+    border: none; border-radius: 12px; padding: 13px 22px; font-family: "Orbitron", sans-serif; font-size: 12px; font-weight: 900; cursor: pointer; letter-spacing: 0.5px; transition: all 0.25s ease;
+}
+.primary-btn { color: white; background: linear-gradient(135deg, var(--neon-pink), var(--neon-purple)); box-shadow: 0 8px 25px rgba(255, 0, 85, 0.4); }
+.primary-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(255, 0, 85, 0.6); }
+.secondary-btn { color: var(--text-main); background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.1); }
+.secondary-btn:hover { background: rgba(255,255,255,.08); border-color: var(--neon-cyan); transform: translateY(-2px); }
+
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
+.stat { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 18px; background: var(--panel-bg); border: 1px solid var(--panel-border); backdrop-filter: blur(15px); }
+.stat-icon { width: 50px; height: 50px; display: grid; place-items: center; border-radius: 14px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.2); font-size: 22px; }
+.stat-number { font-family: "Orbitron", sans-serif; font-size: 24px; font-weight: 900; color: #fff; }
+.stat-label { color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
+
+.section-head { display: flex; justify-content: space-between; align-items: center; margin: 40px 0 20px; flex-wrap: wrap; gap: 15px; }
+.section-title { font-family: "Orbitron", sans-serif; font-size: 22px; font-weight: 900; color: #fff; }
+.section-title span { color: var(--text-muted); font-family: "Cairo", sans-serif; font-size: 13px; font-weight: 500; margin-right: 10px; }
+.filters { display: flex; gap: 10px; flex-wrap: wrap; }
+.filter {
+    border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.02); color: var(--text-muted);
+    border-radius: 100px; padding: 8px 18px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+}
+.filter.active { color: white; background: rgba(255, 0, 85, 0.15); border-color: var(--neon-pink); box-shadow: 0 0 15px rgba(255, 0, 85, 0.25); }
+.filter:hover:not(.active) { border-color: rgba(255,255,255,0.2); color: #fff; }
+
+.grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+.game-card {
+    position: relative; overflow: hidden; min-height: 210px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 22px; border-radius: 20px;
+    text-decoration: none; color: white; background: var(--panel-bg);
+    border: 1px solid var(--panel-border); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.game-card:hover { transform: translateY(-8px); border-color: var(--neon-cyan); box-shadow: 0 15px 35px rgba(0, 240, 255, 0.25); background: rgba(20, 12, 40, 0.85); }
+.game-icon { width: 75px; height: 75px; display: grid; place-items: center; border-radius: 16px; font-size: 38px; margin-bottom: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+.game-title { font-family: "Orbitron", sans-serif; font-size: 13px; font-weight: 800; margin-bottom: 5px; color: #fff; }
+.game-subtitle { color: var(--text-muted); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.no-results { display: none; text-align: center; padding: 60px 20px; color: var(--text-muted); grid-column: 1 / -1; font-size: 14px; }
+footer { text-align: center; margin-top: 60px; padding-top: 25px; border-top: 1px solid rgba(255,255,255,.06); color: var(--text-muted); font-size: 12px; letter-spacing: 0.5px; }
+footer strong { color: var(--neon-cyan); font-family: "Orbitron", sans-serif; }
+
+@media (max-width: 768px) {
+    .stats { grid-template-columns: 1fr; }
+    .header { flex-direction: column; align-items: stretch; }
+    .search-box { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<script>
+    const translations = {
+        arabic: {
+            title: "GameVerse | مركز الألعاب",
+            searchPlaceholder: "قلب على لعبة...",
+            heroBadge: "جميع الألعاب جاهزة للعب",
+            heroTitle: "مرحباً بك في<br><span class='gradient-text'>عالم الألعاب 🎮</span>",
+            heroDesc: "مجموعة ديال الألعاب المختلفة فمكان واحد. اختار اللعبة اللي عجباتك، دخل مباشرة، وبدا التحدي.",
+            exploreBtn: "🎮 استكشف الألعاب",
+            searchBtn: "🔎 قلب على لعبة",
+            gamesAvailable: "لعبة متوفرة",
+            interactiveGames: "ألعاب تفاعلية",
+            playDirect: "العب مباشرة",
+            sectionTitle: "الألعاب",
+            sectionSubtitle: "اختار لعبتك",
+            filterAll: "الكل",
+            noResultsText: "ما لقيتش هاد اللعبة",
+            noResultsSub: "جرب اسم آخر",
+            footerText: "— جميع الألعاب ديالك فمكان واحد",
+            games: {
+                "x-o": { title: "لعبة X-O", sub: "Puzzle • Strategy" },
+                "snake": { title: "لعبة الحنش", sub: "Arcade" },
+                "duck": { title: "البطة الناقزة", sub: "Arcade" },
+                "fire": { title: "تحدي النار", sub: "Action" },
+                "piano": { title: "لعبة البيانو", sub: "Music • Arcade" },
+                "mario": { title: "لعبة ماريو", sub: "Action" },
+                "prism": { title: "لعبة الجواهر", sub: "Puzzle" },
+                "maze": { title: "لعبة المتاهة", sub: "Puzzle" },
+                "mataha": { title: "المتاهة", sub: "Challenge" },
+                "pour": { title: "صب الألوان", sub: "Puzzle" },
+                "frontline": { title: "لعبة الدفاع الأمامي", sub: "Strategy" },
+                "memory": { title: "رحلة الذاكرة", sub: "Memory • Puzzle" },
+                "jump": { title: "القفز العالي", sub: "Arcade" },
+                "stack": { title: "برج النيون", sub: "Arcade" },
+                "fruit": { title: "سباق الفواكه", sub: "Arcade" },
+                "flappy": { title: "فلابي الفوضى", sub: "Arcade" },
+                "neon-xo": { title: "إكس أو نيون", sub: "Puzzle" },
+                "shadowforge": { title: "زنزانة الظلال", sub: "Action" },
+                "galaxy": { title: "انزلاق المجرة", sub: "Space • Action" },
+                "arcane": { title: "صدع السحر", sub: "Magic • Action" },
+                "gravity": { title: "خطوط الجاذبية", sub: "Puzzle" },
+                "block-flow": { title: "تدفق المكعبات", sub: "Puzzle" }
+            }
+        },
+        french: {
+            title: "GameVerse | Centre de Jeux",
+            searchPlaceholder: "Rechercher un jeu...",
+            heroBadge: "Tous les jeux sont prêts à jouer",
+            heroTitle: "Bienvenue dans le<br><span class='gradient-text'>Monde des Jeux 🎮</span>",
+            heroDesc: "Une collection de différents jeux en un seul endroit. Choisissez votre jeu et relevez le défi.",
+            exploreBtn: "🎮 Explorer les jeux",
+            searchBtn: "🔎 Chercher un jeu",
+            gamesAvailable: "Jeux disponibles",
+            interactiveGames: "Jeux interactifs",
+            playDirect: "Jouer en direct",
+            sectionTitle: "Jeux",
+            sectionSubtitle: "Choisissez votre jeu",
+            filterAll: "Tous",
+            noResultsText: "Aucun jeu trouvé",
+            noResultsSub: "Essayez un autre nom",
+            footerText: "— Tous vos jeux en un seul endroit",
+            games: {
+                "x-o": { title: "Jeu X-O", sub: "Puzzle • Strategy" },
+                "snake": { title: "Jeu du Serpent", sub: "Arcade" },
+                "duck": { title: "Canard Sauteur", sub: "Arcade" },
+                "fire": { title: "Défi du Feu", sub: "Action" },
+                "piano": { title: "Jeu de Piano", sub: "Music • Arcade" },
+                "mario": { title: "Jeu de Mario", sub: "Action" },
+                "prism": { title: "Jeu de Joyaux", sub: "Puzzle" },
+                "maze": { title: "Jeu du Labyrinthe", sub: "Puzzle" },
+                "mataha": { title: "Labyrinthe", sub: "Challenge" },
+                "pour": { title: "Trier les Couleurs", sub: "Puzzle" },
+                "frontline": { title: "Défense de Ligne", sub: "Strategy" },
+                "memory": { title: "Odyssée Mémoire", sub: "Memory • Puzzle" },
+                "jump": { title: "Saut Céleste", sub: "Arcade" },
+                "stack": { title: "Tour de Neon", sub: "Arcade" },
+                "fruit": { title: "Rush de Fruits", sub: "Arcade" },
+                "flappy": { title: "Flappy Chaos", sub: "Arcade" },
+                "neon-xo": { title: "Neon X-O", sub: "Puzzle" },
+                "shadowforge": { title: "Donjon des Ombres", sub: "Action" },
+                "galaxy": { title: "Drift Galactique", sub: "Space • Action" },
+                "arcane": { title: "Rifte Arcanique", sub: "Magic • Action" },
+                "gravity": { title: "Lignes de Gravité", sub: "Puzzle" },
+                "block-flow": { title: "Flux de Blocs", sub: "Puzzle" }
+            }
+        },
+        english: {
+            title: "GameVerse | Game Hub",
+            searchPlaceholder: "Search for a game...",
+            heroBadge: "All games are ready to play",
+            heroTitle: "Welcome to the<br><span class='gradient-text'>Game World 🎮</span>",
+            heroDesc: "A collection of various games in one place. Choose the game you like, dive right in, and start the challenge.",
+            exploreBtn: "🎮 Explore Games",
+            searchBtn: "🔎 Search Game",
+            gamesAvailable: "Games Available",
+            interactiveGames: "Interactive Games",
+            playDirect: "Play Directly",
+            sectionTitle: "Games",
+            sectionSubtitle: "Choose your game",
+            filterAll: "All",
+            noResultsText: "No games found",
+            noResultsSub: "Try another name",
+            footerText: "— All your games in one place",
+            games: {
+                "x-o": { title: "X-O Game", sub: "Puzzle • Strategy" },
+                "snake": { title: "Snake Game", sub: "Arcade" },
+                "duck": { title: "Jumping Duck", sub: "Arcade" },
+                "fire": { title: "Fire Challenge", sub: "Action" },
+                "piano": { title: "Piano Game", sub: "Music • Arcade" },
+                "mario": { title: "Mario Game", sub: "Action" },
+                "prism": { title: "Jewels Game", sub: "Puzzle" },
+                "maze": { title: "Maze Game", sub: "Puzzle" },
+                "mataha": { title: "The Labyrinth", sub: "Challenge" },
+                "pour": { title: "Color Pour", sub: "Puzzle" },
+                "frontline": { title: "Frontline Defense", sub: "Strategy" },
+                "memory": { title: "Memory Odyssey", sub: "Memory • Puzzle" },
+                "jump": { title: "Skybound Jump", sub: "Arcade" },
+                "stack": { title: "Neon Stack Tower", sub: "Arcade" },
+                "fruit": { title: "Fruit Jump Rush", sub: "Arcade" },
+                "flappy": { title: "Flappy Chaos", sub: "Arcade" },
+                "neon-xo": { title: "Neon X-O", sub: "Puzzle" },
+                "shadowforge": { title: "Shadowforge Dungeon", sub: "Action" },
+                "galaxy": { title: "Galaxy Drift", sub: "Space • Action" },
+                "arcane": { title: "Arcane Rift", sub: "Magic • Action" },
+                "gravity": { title: "Gravity Lines", sub: "Puzzle" },
+                "block-flow": { title: "Block Flow", sub: "Puzzle" }
+            }
+        }
+    };
+
+    const playerProfile = localStorage.getItem("gameVerseProfile");
+    if (!playerProfile) {
+        window.location.replace("profile.html");
+    } else {
+        try {
+            const profile = JSON.parse(playerProfile);
+            const lang = profile.language && translations[profile.language] ? profile.language : "arabic";
+            const t = translations[lang];
+
+            document.documentElement.lang = lang === "arabic" ? "ar" : (lang === "french" ? "fr" : "en");
+            document.documentElement.dir = lang === "arabic" ? "rtl" : "ltr";
+
+            document.addEventListener("DOMContentLoaded", () => {
+                document.title = t.title;
+                const sInput = document.getElementById("searchInput");
+                if(sInput) sInput.placeholder = t.searchPlaceholder;
+                
+                const hBadge = document.querySelector(".hero-badge");
+                if(hBadge) hBadge.innerHTML = `<span class="live-dot"></span> ${t.heroBadge}`;
+                
+                const hTitle = document.querySelector(".hero h1");
+                if(hTitle) hTitle.innerHTML = t.heroTitle;
+                
+                const hDesc = document.querySelector(".hero p");
+                if(hDesc) hDesc.textContent = t.heroDesc;
+                
+                const pBtn = document.querySelector(".primary-btn");
+                if(pBtn) pBtn.textContent = t.exploreBtn;
+                
+                const sBtn = document.querySelector(".secondary-btn");
+                if(sBtn) sBtn.textContent = t.searchBtn;
+                
+                const statLabels = document.querySelectorAll(".stat-label");
+                if(statLabels.length >= 3) {
+                    statLabels[0].textContent = t.gamesAvailable;
+                    statLabels[1].textContent = t.interactiveGames;
+                    statLabels[2].textContent = t.playDirect;
+                }
+
+                const secTitle = document.querySelector(".section-title");
+                if(secTitle) secTitle.innerHTML = `${t.sectionTitle} <span>${t.sectionSubtitle}</span>`;
+                
+                const filterAllBtn = document.querySelector('[data-filter="all"]');
+                if(filterAllBtn) filterAllBtn.textContent = t.filterAll;
+                
+                const noResDiv = document.getElementById("noResults");
+                if(noResDiv) {
+                    noResDiv.querySelector("div:nth-child(2)").textContent = t.noResultsText;
+                    noResDiv.querySelector("small").textContent = t.noResultsSub;
+                }
+
+                const footerEl = document.querySelector("footer");
+                if(footerEl) footerEl.innerHTML = `🎮 <strong>GameVerse</strong> ${t.footerText}`;
+
+                document.querySelectorAll(".game-card").forEach(card => {
+                    const gameKey = card.getAttribute("data-key");
+                    if (gameKey && t.games[gameKey]) {
+                        card.querySelector(".game-title").textContent = t.games[gameKey].title;
+                        card.querySelector(".game-subtitle").textContent = t.games[gameKey].sub;
+                    }
+                });
+            });
+        } catch (e) {}
+    }
+</script>
+
+<div class="app">
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🎮</div>
+            <div class="logo-text">GameVerse<span>مركز الألعاب</span></div>
+        </div>
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input id="searchInput" type="text" placeholder="قلب على لعبة..." autocomplete="off">
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge"><span class="live-dot"></span>جميع الألعاب جاهزة للعب</div>
+            <h1>مرحباً بك في<br><span class="gradient-text">عالم الألعاب 🎮</span></h1>
+            <p>مجموعة ديال الألعاب المختلفة فمكان واحد. اختار اللعبة اللي عجباتك، دخل مباشرة، وبدا التحدي.</p>
+            <div class="hero-buttons">
+                <button class="primary-btn" onclick="scrollToGames()">🎮 استكشف الألعاب</button>
+                <button class="secondary-btn" onclick="focusSearch()">🔎 قلب على لعبة</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="stat"><div class="stat-icon">🎮</div><div><div class="stat-number" id="gameCount">0</div><div class="stat-label">لعبة متوفرة</div></div></div>
+        <div class="stat"><div class="stat-icon">⚡</div><div><div class="stat-number">100%</div><div class="stat-label">ألعاب تفاعلية</div></div></div>
+        <div class="stat"><div class="stat-icon">🌐</div><div><div class="stat-number">Web</div><div class="stat-label">العب مباشرة</div></div></div>
+    </section>
+
+    <div class="section-head" id="gamesSection">
+        <div class="section-title">الألعاب <span>اختار لعبتك</span></div>
+        <div class="filters">
+            <button class="filter active" data-filter="all">الكل</button>
+            <button class="filter" data-filter="arcade">🎯 Arcade</button>
+            <button class="filter" data-filter="puzzle">🧩 Puzzle</button>
+            <button class="filter" data-filter="action">⚔️ Action</button>
+        </div>
+    </div>
+
+    <div class="grid-container" id="gamesGrid">
+        <a href="play.html?game=index.htm" class="game-card" data-category="puzzle" data-key="x-o" data-name="x-o xo tic tac toe لعبة"><div class="game-icon">❌</div><div class="game-title">لعبة X-O</div><div class="game-subtitle">Puzzle • Strategy</div></a>
+        <a href="play.html?game=snake.html" class="game-card" data-category="arcade" data-key="snake" data-name="snake حنش لعبة"><div class="game-icon">🐍</div><div class="game-title">لعبة الحنش</div><div class="game-subtitle">Arcade</div></a>
+        <a href="play.html?game=duck.html" class="game-card" data-category="arcade" data-key="duck" data-name="duck البطة الناقزة"><div class="game-icon">🦆</div><div class="game-title">البطة الناقزة</div><div class="game-subtitle">Arcade</div></a>
+        <a href="play.html?game=game.html" class="game-card" data-category="action" data-key="fire" data-name="fire تحدي النار"><div class="game-icon">🔥</div><div class="game-title">تحدي النار</div><div class="game-subtitle">Action</div></a>
+        <a href="play.html?game=piano.html" class="game-card" data-category="arcade" data-key="piano" data-name="piano البيانو"><div class="game-icon">🎹</div><div class="game-title">لعبة البيانو</div><div class="game-subtitle">Music • Arcade</div></a>
+        <a href="play.html?game=mario.html" class="game-card" data-category="action" data-key="mario" data-name="mario ماريو"><div class="game-icon">🍄</div><div class="game-title">لعبة ماريو</div><div class="game-subtitle">Action</div></a>
+        <a href="play.html?game=prism.html" class="game-card" data-category="puzzle" data-key="prism" data-name="prism jewels الجواهر"><div class="game-icon">💎</div><div class="game-title">لعبة الجواهر</div><div class="game-subtitle">Puzzle</div></a>
+        <a href="play.html?game=maze.html" class="game-card" data-category="puzzle" data-key="maze" data-name="maze المتاهة"><div class="game-icon">🧩</div><div class="game-title">لعبة المتاهة</div><div class="game-subtitle">Puzzle</div></a>
+        <a href="play.html?game=mataha.html" class="game-card" data-category="puzzle" data-key="mataha" data-name="mataha المتاهة"><div class="game-icon">😵‍💫</div><div class="game-title">المتاهة</div><div class="game-subtitle">Challenge</div></a>
+        <a href="play.html?game=pour.html" class="game-card" data-category="puzzle" data-key="pour" data-name="pour water sort صب الالوان"><div class="game-icon">🧪</div><div class="game-title">صب الألوان</div><div class="game-subtitle">Puzzle</div></a>
+        <a href="play.html?game=frontline.html" class="game-card" data-category="action" data-key="frontline" data-name="frontline defense الدفاع"><div class="game-icon">🛡️</div><div class="game-title">Frontline Defense</div><div class="game-subtitle">Strategy</div></a>
+        <a href="play.html?game=memory.html" class="game-card" data-category="puzzle" data-key="memory" data-name="memory odyssey memory"><div class="game-icon">🧠</div><div class="game-title">Memory Odyssey</div><div class="game-subtitle">Memory • Puzzle</div></a>
+        <a href="play.html?game=jump.html" class="game-card" data-category="arcade" data-key="jump" data-name="skybound jump القفز"><div class="game-icon">🦘</div><div class="game-title">Skybound Jump</div><div class="game-subtitle">Arcade</div></a>
+        <a href="play.html?game=stack.html" class="game-card" data-category="arcade" data-key="stack" data-name="neon stack tower"><div class="game-icon">🏗️</div><div class="game-title">Neon Stack Tower</div><div class="game-subtitle">Arcade</div></a>
+        <a href="play.html?game=fruit.html" class="game-card" data-category="arcade" data-key="fruit" data-name="fruit jump rush الفواكه"><div class="game-icon">🍉</div><div class="game-title">Fruit Jump Rush</div><div class="game-subtitle">Arcade</div></a>
+        <a href="play.html?game=flappy.html" class="game-card" data-category="arcade" data-key="flappy" data-name="flappy chaos"><div class="game-icon">🦅</div><div class="game-title">Flappy Chaos</div><div class="game-subtitle">Arcade</div></a>
+        <a href="play.html?game=neon-xo.html" class="game-card" data-category="puzzle" data-key="neon-xo" data-name="neon xo"><div class="game-icon">⚡</div><div class="game-title">Neon X-O</div><div class="game-subtitle">Puzzle</div></a>
+        <a href="play.html?game=shadowforge.html" class="game-card" data-category="action" data-key="shadowforge" data-name="shadowforge dungeon"><div class="game-icon">⚔️</div><div class="game-title">Shadowforge Dungeon</div><div class="game-subtitle">Action</div></a>
+        <a href="play.html?game=galaxy-drift.html" class="game-card" data-category="action" data-key="galaxy" data-name="galaxy drift space"><div class="game-icon">🚀</div><div class="game-title">Galaxy Drift</div><div class="game-subtitle">Space • Action</div></a>
+        <a href="play.html?game=arcane-rift.html" class="game-card" data-category="action" data-key="arcane" data-name="arcane rift magic"><div class="game-icon">🔮</div><div class="game-title">Arcane Rift</div><div class="game-subtitle">Magic • Action</div></a>
+        <a href="play.html?game=gravity-lines.html" class="game-card" data-category="puzzle" data-key="gravity" data-name="gravity lines"><div class="game-icon">〰️</div><div class="game-title">Gravity Lines</div><div class="game-subtitle">Puzzle</div></a>
+        <a href="play.html?game=block-flow.html" class="game-card" data-category="puzzle" data-key="block-flow" data-name="block flow blocks"><div class="game-icon">🧱</div><div class="game-title">Block Flow</div><div class="game-subtitle">Puzzle</div></a>
+
+        <div class="no-results" id="noResults">
+            <div class="emoji">🔍</div>
+            <div>ما لقيتش هاد اللعبة</div>
+            <small>جرب اسم آخر</small>
+        </div>
+    </div>
+
+    <footer>🎮 <strong>GameVerse</strong> — جميع الألعاب ديالك فمكان واحد</footer>
+</div>
+
+<script>
+const searchInput = document.getElementById("searchInput");
+const games = document.querySelectorAll(".game-card");
+const noResults = document.getElementById("noResults");
+const gameCount = document.getElementById("gameCount");
+const filters = document.querySelectorAll(".filter");
+
+gameCount.textContent = games.length;
+
+searchInput.addEventListener("input", function () {
+    const query = this.value.toLowerCase().trim();
+    let visible = 0;
+    games.forEach(game => {
+        const name = game.dataset.name.toLowerCase();
+        const title = game.querySelector(".game-title").textContent.toLowerCase();
+        if (name.includes(query) || title.includes(query)) {
+            game.style.display = "flex";
+            visible++;
+        } else {
+            game.style.display = "none";
+        }
+    });
+    noResults.style.display = visible === 0 ? "block" : "none";
+});
+
+filters.forEach(filter => {
+    filter.addEventListener("click", function () {
+        filters.forEach(f => f.classList.remove("active"));
+        this.classList.add("active");
+        const category = this.dataset.filter;
+        let visible = 0;
+        games.forEach(game => {
+            if (category === "all" || game.dataset.category === category) {
+                game.style.display = "flex";
+                visible++;
+            } else {
+                game.style.display = "none";
+            }
+        });
+        noResults.style.display = visible === 0 ? "block" : "none";
+        searchInput.value = "";
+    });
+});
+
+function scrollToGames() { document.getElementById("gamesSection").scrollIntoView({ behavior: "smooth" }); }
+function focusSearch() { searchInput.focus(); }
+</script>
+</body>
+</html>

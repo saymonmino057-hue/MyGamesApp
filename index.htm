@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة X-O العصرية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: radial-gradient(circle at center, #1e293b, #0f172a);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #f87171;
+            margin-bottom: 5px;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        .status {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 400;
+            opacity: 0.8;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 110px);
+            grid-template-rows: repeat(3, 110px);
+            gap: 15px;
+        }
+
+        .cell {
+            background-color: #1e293b;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+        }
+
+        .cell::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(248, 113, 113, 0.2), rgba(74, 222, 128, 0.2));
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .cell:hover {
+            transform: translateY(-3px) scale(1.03);
+            background-color: #334155;
+        }
+
+        .cell:hover::after {
+            opacity: 1;
+        }
+
+        .cell.X {
+            color: #f87171;
+        }
+
+        .cell.O {
+            color: #4ade80;
+        }
+
+        .reset-btn {
+            margin-top: 30px;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            background: linear-gradient(135deg, #f87171, #f43f5e);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(248, 113, 113, 0.3);
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 10px -1px rgba(248, 113, 113, 0.4);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>❌ لعبة X-O ⭕</h1>
+    <div class="status" id="statusText">دور اللاعب: X</div>
+
+    <div class="board">
+        <div class="cell" onclick="makeMove(this, 0)"></div>
+        <div class="cell" onclick="makeMove(this, 1)"></div>
+        <div class="cell" onclick="makeMove(this, 2)"></div>
+        <div class="cell" onclick="makeMove(this, 3)"></div>
+        <div class="cell" onclick="makeMove(this, 4)"></div>
+        <div class="cell" onclick="makeMove(this, 5)"></div>
+        <div class="cell" onclick="makeMove(this, 6)"></div>
+        <div class="cell" onclick="makeMove(this, 7)"></div>
+        <div class="cell" onclick="makeMove(this, 8)"></div>
+    </div>
+
+    <button class="reset-btn" onclick="resetGame()">إعادة اللعب</button>
+
+    <script>
+        let board = ["", "", "", "", "", "", "", "", ""];
+        let currentPlayer = "X";
+        let gameActive = true;
+
+        const winPatterns = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // الأسطر
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // الأعمدة
+            [0, 4, 8], [2, 4, 6]             // الخطوط المائلة
+        ];
+
+        function makeMove(cell, index) {
+            if (board[index] !== "" || !gameActive) return;
+
+            board[index] = currentPlayer;
+            cell.innerText = currentPlayer;
+            cell.classList.add(currentPlayer);
+
+            checkWinner();
+        }
+
+        function checkWinner() {
+            let roundWon = false;
+
+            for (let i = 0; i < winPatterns.length; i++) {
+                const [a, b, c] = winPatterns[i];
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    roundWon = true;
+                    break;
+                }
+            }
+
+            if (roundWon) {
+                document.getElementById("statusText").innerText = `🎉 المـنتصر هو: ${currentPlayer}!`;
+                gameActive = false;
+                return;
+            }
+
+            if (!board.includes("")) {
+                document.getElementById("statusText").innerText = "🤝 تعادل!";
+                gameActive = false;
+                return;
+            }
+
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            document.getElementById("statusText").innerText = `دور اللاعب: ${currentPlayer}`;
+        }
+
+        function resetGame() {
+            board = ["", "", "", "", "", "", "", "", ""];
+            currentPlayer = "X";
+            gameActive = true;
+            document.getElementById("statusText").innerText = "دور اللاعب: X";
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.innerText = "";
+                cell.classList.remove("X", "O");
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Flappy Chaos</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#020914;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+#game{
+    position:relative;
+    width:min(520px,100vw);
+    height:min(780px,100vh);
+    overflow:hidden;
+    background:#07182b;
+    box-shadow:0 0 80px rgba(0,200,255,.18);
+}
+
+canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    touch-action:none;
+}
+
+#hud{
+    position:absolute;
+    z-index:10;
+    top:15px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:8px;
+    width:calc(100% - 20px);
+    justify-content:center;
+    pointer-events:none;
+}
+
+.box{
+    min-width:78px;
+    padding:7px 12px;
+    border-radius:14px;
+    text-align:center;
+    color:#fff;
+    background:rgba(2,13,28,.48);
+    border:1px solid rgba(255,255,255,.18);
+    backdrop-filter:blur(10px);
+    text-shadow:0 2px 5px #000;
+}
+
+.box small{
+    display:block;
+    font-size:7px;
+    letter-spacing:2px;
+    opacity:.7;
+}
+
+.box strong{
+    font-size:21px;
+}
+
+#score{color:#ffe34d}
+#best{color:#52e9ff}
+#lives{color:#ff6381}
+#coins{color:#ffd84d}
+
+#startScreen,
+#gameOver{
+    position:absolute;
+    inset:0;
+    z-index:20;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:rgba(0,5,14,.35);
+    backdrop-filter:blur(3px);
+}
+
+.card{
+    width:min(390px,88%);
+    padding:32px 25px;
+    border-radius:28px;
+    background:linear-gradient(
+        145deg,
+        rgba(8,35,59,.94),
+        rgba(2,12,25,.96)
+    );
+    border:1px solid rgba(100,220,255,.25);
+    box-shadow:0 30px 80px rgba(0,0,0,.5);
+    color:#fff;
+}
+
+.card h1{
+    font-size:42px;
+    margin-bottom:8px;
+}
+
+.card p{
+    color:#9bb1c6;
+    font-size:13px;
+    line-height:1.7;
+    margin-bottom:20px;
+}
+
+.bigScore{
+    font-size:56px;
+    font-weight:900;
+    color:#ffe24c;
+    margin:8px 0 18px;
+}
+
+button{
+    border:0;
+    border-radius:15px;
+    padding:14px 30px;
+    cursor:pointer;
+    font-weight:900;
+    letter-spacing:2px;
+    color:#041323;
+    background:linear-gradient(135deg,#ffe75b,#ffad2f);
+    box-shadow:0 8px 25px rgba(255,190,40,.3);
+}
+
+#gameOver{
+    display:none;
+}
+
+#warning{
+    position:absolute;
+    z-index:8;
+    top:92px;
+    left:50%;
+    transform:translateX(-50%);
+    color:#ff5b67;
+    font-weight:900;
+    font-size:11px;
+    letter-spacing:2px;
+    opacity:0;
+    pointer-events:none;
+}
+
+#power{
+    position:absolute;
+    z-index:9;
+    left:50%;
+    bottom:22px;
+    transform:translateX(-50%);
+    color:#6ff7ff;
+    font-size:10px;
+    letter-spacing:2px;
+    opacity:0;
+    pointer-events:none;
+}
+
+@media(max-width:520px){
+    #game{
+        width:100vw;
+        height:100vh;
+    }
+
+    .box{
+        min-width:65px;
+        padding:6px 7px;
+    }
+
+    .box strong{
+        font-size:18px;
+    }
+
+    .card h1{
+        font-size:36px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<canvas id="canvas"></canvas>
+
+<div id="hud">
+    <div class="box">
+        <small>SCORE</small>
+        <strong id="score">0</strong>
+    </div>
+
+    <div class="box">
+        <small>BEST</small>
+        <strong id="best">0</strong>
+    </div>
+
+    <div class="box">
+        <small>COINS</small>
+        <strong id="coins">0</strong>
+    </div>
+
+    <div class="box">
+        <small>LIVES</small>
+        <strong id="lives">3</strong>
+    </div>
+</div>
+
+<div id="warning">⚡ DANGER ⚡</div>
+<div id="power">🛡 SHIELD ACTIVE</div>
+
+<div id="startScreen">
+    <div class="card">
+        <h1>FLAPPY CHAOS</h1>
+        <p>
+            Fly through the obstacles.<br>
+            Collect coins and shields.<br>
+            Avoid fire, electricity and spikes.
+        </p>
+        <button id="startButton">START GAME</button>
+    </div>
+</div>
+
+<div id="gameOver">
+    <div class="card">
+        <h1>GAME OVER</h1>
+
+        <div class="bigScore" id="finalScore">
+            0
+        </div>
+
+        <p id="resultText">
+            The sky defeated you.
+        </p>
+
+        <button id="restartButton">
+            PLAY AGAIN
+        </button>
+    </div>
+</div>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+const game=document.getElementById("game");
+
+let W=0;
+let H=0;
+let DPR=1;
+
+function resize(){
+
+    const r=game.getBoundingClientRect();
+
+    W=r.width;
+    H=r.height;
+
+    DPR=Math.min(window.devicePixelRatio||1,2);
+
+    canvas.width=W*DPR;
+    canvas.height=H*DPR;
+
+    canvas.style.width=W+"px";
+    canvas.style.height=H+"px";
+
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+
+/* =========================================================
+   UI
+========================================================= */
+
+const scoreEl=document.getElementById("score");
+const bestEl=document.getElementById("best");
+const coinsEl=document.getElementById("coins");
+const livesEl=document.getElementById("lives");
+
+const startScreen=document.getElementById("startScreen");
+const gameOver=document.getElementById("gameOver");
+
+const finalScore=document.getElementById("finalScore");
+const resultText=document.getElementById("resultText");
+
+const warning=document.getElementById("warning");
+const powerText=document.getElementById("power");
+
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let state="ready";
+
+let score=0;
+let coins=0;
+let lives=3;
+
+let best=
+    Number(localStorage.getItem("flappyChaosBest")||0);
+
+let time=0;
+
+let difficulty=1;
+
+let shake=0;
+
+
+/* =========================================================
+   WORLD
+========================================================= */
+
+const groundHeight=65;
+
+let pipes=[];
+let traps=[];
+let collectibles=[];
+let particles=[];
+let clouds=[];
+
+
+/* =========================================================
+   BIRD
+========================================================= */
+
+const bird={
+
+    x:120,
+    y:300,
+
+    vy:0,
+
+    radius:17,
+
+    rotation:0,
+
+    wing:0,
+
+    invincible:0,
+
+    shield:0,
+
+    wind:0
+};
+
+
+/* =========================================================
+   PHYSICS
+========================================================= */
+
+const gravity=1450;
+const flapPower=-470;
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function random(min,max){
+    return Math.random()*(max-min)+min;
+}
+
+function randInt(min,max){
+    return Math.floor(random(min,max+1));
+}
+
+
+/* =========================================================
+   CLOUDS
+========================================================= */
+
+function makeClouds(){
+
+    clouds=[];
+
+    for(let i=0;i<12;i++){
+
+        clouds.push({
+
+            x:random(0,W),
+            y:random(50,H*.55),
+
+            size:random(.6,1.5),
+
+            speed:random(8,22),
+
+            alpha:random(.12,.35)
+        });
+    }
+}
+
+makeClouds();
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function reset(){
+
+    score=0;
+    coins=0;
+    lives=3;
+
+    difficulty=1;
+
+    pipes=[];
+    traps=[];
+    collectibles=[];
+    particles=[];
+
+    bird.x=W*.25;
+    bird.y=H*.45;
+    bird.vy=0;
+    bird.rotation=0;
+    bird.invincible=0;
+    bird.shield=0;
+    bird.wind=0;
+
+    shake=0;
+
+    scoreEl.textContent=0;
+    coinsEl.textContent=0;
+    livesEl.textContent=3;
+    bestEl.textContent=best;
+
+    warning.style.opacity=0;
+    powerText.style.opacity=0;
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+function start(){
+
+    reset();
+
+    state="playing";
+
+    startScreen.style.display="none";
+    gameOver.style.display="none";
+
+    flap();
+
+}
+
+
+/* =========================================================
+   FLAP
+========================================================= */
+
+function flap(){
+
+    if(state==="ready"){
+        start();
+        return;
+    }
+
+    if(state!=="playing") return;
+
+    bird.vy=flapPower;
+
+    for(let i=0;i<7;i++){
+
+        particles.push({
+
+            x:bird.x-12,
+            y:bird.y+random(-5,5),
+
+            vx:random(-80,-20),
+            vy:random(-30,30),
+
+            life:.5,
+            size:random(2,5),
+
+            color:"#fff"
+        });
+    }
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+window.addEventListener("keydown",e=>{
+
+    if(
+        e.code==="Space"||
+        e.code==="ArrowUp"
+    ){
+
+        e.preventDefault();
+
+        flap();
+    }
+});
+
+canvas.addEventListener("pointerdown",e=>{
+    e.preventDefault();
+    flap();
+});
+
+document.getElementById("startButton")
+    .addEventListener("click",start);
+
+document.getElementById("restartButton")
+    .addEventListener("click",start);
+
+
+/* =========================================================
+   PIPE CREATION
+========================================================= */
+
+let pipeTimer=0;
+
+function createPipe(){
+
+    const gap=
+        Math.max(
+            115,
+            180-difficulty*7
+        );
+
+    const margin=85;
+
+    const available=
+        H-groundHeight-
+        margin-
+        gap;
+
+    const gapY=
+        margin+
+        random(0,available);
+
+    const moving=
+        score>4 &&
+        Math.random()<Math.min(.6,difficulty*.08);
+
+    const pipe={
+
+        x:W+70,
+
+        gapY:gapY,
+
+        baseY:gapY,
+
+        gap:gap,
+
+        moving:moving,
+
+        moveSpeed:random(.6,1.3),
+
+        phase:random(0,Math.PI*2),
+
+        scored:false
+    };
+
+    pipes.push(pipe);
+
+    /*
+        Extra danger sometimes appears.
+    */
+
+    if(score>3 && Math.random()<.38){
+
+        traps.push({
+
+            type:"fire",
+
+            x:pipe.x+pipeWidth()/2,
+
+            y:gapY+gap/2,
+
+            radius:18,
+
+            rotation:0,
+
+            speed:0
+        });
+    }
+
+    /*
+        Electricity.
+    */
+
+    if(score>7 && Math.random()<.28){
+
+        traps.push({
+
+            type:"electric",
+
+            x:pipe.x+pipeWidth()/2,
+
+            y:gapY+gap/2,
+
+            radius:23,
+
+            rotation:0,
+
+            speed:2
+        });
+    }
+
+    /*
+        Rotating spike.
+    */
+
+    if(score>12 && Math.random()<.2){
+
+        traps.push({
+
+            type:"spike",
+
+            x:pipe.x+pipeWidth()/2,
+
+            y:gapY+gap/2,
+
+            radius:30,
+
+            rotation:random(0,6),
+
+            speed:random(2,4)
+        });
+    }
+
+    /*
+        Coin.
+    */
+
+    if(Math.random()<.8){
+
+        collectibles.push({
+
+            type:"coin",
+
+            x:pipe.x+pipeWidth()/2,
+
+            y:gapY+gap/2,
+
+            radius:12,
+
+            taken:false,
+
+            phase:random(0,6)
+        });
+    }
+
+    /*
+        Shield.
+    */
+
+    if(score>8 && Math.random()<.12){
+
+        collectibles.push({
+
+            type:"shield",
+
+            x:pipe.x+pipeWidth()/2+
+                random(-15,15),
+
+            y:gapY+gap/2+
+                random(-30,30),
+
+            radius:15,
+
+            taken:false,
+
+            phase:random(0,6)
+        });
+    }
+}
+
+function pipeWidth(){
+    return 67;
+}
+
+
+/* =========================================================
+   UPDATE DIFFICULTY
+========================================================= */
+
+function updateDifficulty(){
+
+    difficulty=
+        1+
+        Math.floor(score/5)*.18;
+}
+
+
+/* =========================================================
+   UPDATE BIRD
+========================================================= */
+
+function updateBird(dt){
+
+    if(state!=="playing"){
+
+        if(state==="ready"){
+
+            bird.y=
+                H*.45+
+                Math.sin(time*3)*7;
+        }
+
+        return;
+    }
+
+    bird.wind*=.96;
+
+    bird.vy+=gravity*dt;
+
+    bird.vy+=bird.wind;
+
+    bird.y+=bird.vy*dt;
+
+    bird.rotation=
+        Math.max(
+            -.55,
+            Math.min(
+                1.25,
+                bird.vy/650
+            )
+        );
+
+    bird.invincible=
+        Math.max(
+            0,
+            bird.invincible-dt
+        );
+
+    bird.shield=
+        Math.max(
+            0,
+            bird.shield-dt
+        );
+
+    if(bird.shield>0){
+
+        powerText.style.opacity=1;
+
+    }else{
+
+        powerText.style.opacity=0;
+    }
+}
+
+
+/* =========================================================
+   UPDATE PIPES
+========================================================= */
+
+function updatePipes(dt){
+
+    if(state!=="playing")return;
+
+    pipeTimer+=dt;
+
+    const interval=
+        Math.max(
+            .95,
+            1.42-
+            difficulty*.055
+        );
+
+    if(pipeTimer>=interval){
+
+        pipeTimer=0;
+
+        createPipe();
+    }
+
+    const speed=
+        190+
+        difficulty*14;
+
+    for(let i=pipes.length-1;i>=0;i--){
+
+        const p=pipes[i];
+
+        p.x-=speed*dt;
+
+        if(p.moving){
+
+            p.phase+=
+                p.moveSpeed*dt;
+
+            p.gapY=
+                p.baseY+
+                Math.sin(p.phase)*45;
+
+            p.gapY=Math.max(
+                65,
+                Math.min(
+                    H-groundHeight-p.gap-45,
+                    p.gapY
+                )
+            );
+        }
+
+        if(
+            !p.scored &&
+            p.x+pipeWidth()<bird.x
+        ){
+
+            p.scored=true;
+
+            score++;
+
+            scoreEl.textContent=score;
+
+            if(score>best){
+
+                best=score;
+
+                localStorage.setItem(
+                    "flappyChaosBest",
+                    best
+                );
+
+                bestEl.textContent=best;
+            }
+
+            scoreBurst(
+                bird.x,
+                bird.y
+            );
+
+            updateDifficulty();
+        }
+
+        if(p.x<-100){
+
+            pipes.splice(i,1);
+        }
+    }
+}
+
+
+/* =========================================================
+   UPDATE TRAPS
+========================================================= */
+
+function updateTraps(dt){
+
+    for(let i=traps.length-1;i>=0;i--){
+
+        const t=traps[i];
+
+        t.x-=
+            (190+difficulty*14)*dt;
+
+        t.rotation+=t.speed*dt;
+
+        if(t.x<-80){
+
+            traps.splice(i,1);
+        }
+    }
+}
+
+
+/* =========================================================
+   UPDATE COLLECTIBLES
+========================================================= */
+
+function updateCollectibles(dt){
+
+    for(let i=collectibles.length-1;i>=0;i--){
+
+        const c=collectibles[i];
+
+        c.x-=
+            (190+difficulty*14)*dt;
+
+        c.phase+=dt*4;
+
+        c.y+=
+            Math.sin(c.phase)*.35;
+
+        if(c.x<-50){
+
+            collectibles.splice(i,1);
+        }
+    }
+}
+
+
+/* =========================================================
+   COLLISION HELPERS
+========================================================= */
+
+function circleRectCollision(cx,cy,r,rx,ry,rw,rh){
+
+    const nearestX=
+        Math.max(
+            rx,
+            Math.min(cx,rx+rw)
+        );
+
+    const nearestY=
+        Math.max(
+            ry,
+            Math.min(cy,ry+rh)
+        );
+
+    const dx=cx-nearestX;
+    const dy=cy-nearestY;
+
+    return dx*dx+dy*dy<r*r;
+}
+
+
+/* =========================================================
+   PIPE COLLISION
+========================================================= */
+
+function checkPipeCollision(){
+
+    for(const p of pipes){
+
+        const x=p.x;
+        const w=pipeWidth();
+
+        if(
+            circleRectCollision(
+                bird.x,
+                bird.y,
+                bird.radius,
+                x,
+                0,
+                w,
+                p.gapY
+            )
+        ){
+
+            return true;
+        }
+
+        const bottomY=
+            p.gapY+p.gap;
+
+        if(
+            circleRectCollision(
+                bird.x,
+                bird.y,
+                bird.radius,
+                x,
+                bottomY,
+                w,
+                H-groundHeight-bottomY
+            )
+        ){
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/* =========================================================
+   TRAP COLLISION
+========================================================= */
+
+function checkTrapCollision(){
+
+    for(const t of traps){
+
+        const d=
+            Math.hypot(
+                bird.x-t.x,
+                bird.y-t.y
+            );
+
+        if(d<bird.radius+t.radius){
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+/* =========================================================
+   COLLECT ITEMS
+========================================================= */
+
+function checkCollectibles(){
+
+    for(const c of collectibles){
+
+        if(c.taken)continue;
+
+        const d=
+            Math.hypot(
+                bird.x-c.x,
+                bird.y-c.y
+            );
+
+        if(d<bird.radius+c.radius){
+
+            c.taken=true;
+
+            if(c.type==="coin"){
+
+                coins++;
+
+                score+=2;
+
+                coinsEl.textContent=coins;
+                scoreEl.textContent=score;
+
+                sparkle(
+                    c.x,
+                    c.y,
+                    "#ffd43d"
+                );
+            }
+
+            if(c.type==="shield"){
+
+                bird.shield=7;
+
+                sparkle(
+                    c.x,
+                    c.y,
+                    "#55efff"
+                );
+            }
+        }
+    }
+
+    collectibles=
+        collectibles.filter(c=>!c.taken);
+}
+
+
+/* =========================================================
+   WIND ZONES
+========================================================= */
+
+function applyWind(){
+
+    bird.wind=0;
+
+    for(const p of pipes){
+
+        const centerX=
+            p.x+pipeWidth()/2;
+
+        const centerY=
+            p.gapY+p.gap/2;
+
+        if(
+            Math.abs(bird.x-centerX)<70 &&
+            Math.abs(bird.y-centerY)<p.gap/2
+        ){
+
+            bird.wind=
+                Math.sin(
+                    time*4+
+                    p.x*.02
+                )*5;
+        }
+    }
+}
+
+
+/* =========================================================
+   PLAYER DAMAGE
+========================================================= */
+
+function damage(){
+
+    if(
+        bird.invincible>0||
+        bird.shield>0
+    ){
+
+        if(bird.shield>0){
+
+            bird.shield=0;
+
+            shieldBreak();
+
+        }else{
+
+            bird.invincible=1;
+        }
+
+        return;
+    }
+
+    lives--;
+
+    livesEl.textContent=lives;
+
+    shake=14;
+
+    explosion(
+        bird.x,
+        bird.y,
+        "#ff4f59"
+    );
+
+    if(lives<=0){
+
+        endGame();
+
+    }else{
+
+        bird.invincible=2;
+
+        bird.vy=-260;
+    }
+}
+
+
+/* =========================================================
+   COLLISION CHECK
+========================================================= */
+
+function checkCollisions(){
+
+    if(state!=="playing")return;
+
+    if(
+        bird.y-bird.radius<0||
+        bird.y+bird.radius>
+        H-groundHeight
+    ){
+
+        damage();
+
+        if(
+            bird.y+bird.radius>
+            H-groundHeight
+        ){
+
+            bird.y=
+                H-groundHeight-bird.radius;
+
+            bird.vy=-300;
+        }
+    }
+
+    if(checkPipeCollision()){
+        damage();
+    }
+
+    if(checkTrapCollision()){
+
+        damage();
+
+        warning.style.opacity=1;
+
+        setTimeout(()=>{
+            warning.style.opacity=0;
+        },250);
+    }
+
+    checkCollectibles();
+
+    applyWind();
+}
+
+
+/* =========================================================
+   END GAME
+========================================================= */
+
+function endGame(){
+
+    if(state==="gameover")return;
+
+    state="gameover";
+
+    finalScore.textContent=score;
+
+    resultText.textContent=
+        "Score "+score+
+        "  •  Coins "+coins;
+
+    gameOver.style.display="flex";
+
+    shake=20;
+}
+
+
+/* =========================================================
+   PARTICLES
+========================================================= */
+
+function explosion(x,y,color){
+
+    for(let i=0;i<40;i++){
+
+        const a=random(0,Math.PI*2);
+        const s=random(60,250);
+
+        particles.push({
+
+            x:x,
+            y:y,
+
+            vx:Math.cos(a)*s,
+            vy:Math.sin(a)*s,
+
+            life:1,
+
+            size:random(2,7),
+
+            color:color
+        });
+    }
+}
+
+function sparkle(x,y,color){
+
+    for(let i=0;i<18;i++){
+
+        const a=random(0,Math.PI*2);
+        const s=random(40,150);
+
+        particles.push({
+
+            x:x,
+            y:y,
+
+            vx:Math.cos(a)*s,
+            vy:Math.sin(a)*s,
+
+            life:.8,
+
+            size:random(2,5),
+
+            color:color
+        });
+    }
+}
+
+function scoreBurst(x,y){
+
+    sparkle(
+        x,
+        y,
+        "#fff15a"
+    );
+}
+
+function shieldBreak(){
+
+    explosion(
+        bird.x,
+        bird.y,
+        "#55eaff"
+    );
+}
+
+
+/* =========================================================
+   UPDATE PARTICLES
+========================================================= */
+
+function updateParticles(dt){
+
+    for(let i=particles.length-1;i>=0;i--){
+
+        const p=particles[i];
+
+        p.x+=p.vx*dt;
+        p.y+=p.vy*dt;
+
+        p.vy+=380*dt;
+
+        p.vx*=.985;
+
+        p.life-=dt*1.5;
+
+        if(p.life<=0){
+
+            particles.splice(i,1);
+        }
+    }
+}
+
+
+/* =========================================================
+   CLOUDS
+========================================================= */
+
+function updateClouds(dt){
+
+    for(const c of clouds){
+
+        c.x-=c.speed*dt;
+
+        if(c.x<-220){
+
+            c.x=W+random(20,200);
+            c.y=random(50,H*.55);
+        }
+    }
+}
+
+
+/* =========================================================
+   DRAW SKY
+========================================================= */
+
+function drawSky(){
+
+    const g=
+        ctx.createLinearGradient(
+            0,0,0,H
+        );
+
+    g.addColorStop(0,"#08182e");
+    g.addColorStop(.42,"#14557a");
+    g.addColorStop(1,"#67c5dc");
+
+    ctx.fillStyle=g;
+
+    ctx.fillRect(
+        0,0,W,H
+    );
+
+    /*
+        Atmospheric glow.
+    */
+
+    const glow=
+        ctx.createRadialGradient(
+            W*.72,
+            H*.18,
+            5,
+            W*.72,
+            H*.18,
+            230
+        );
+
+    glow.addColorStop(
+        0,
+        "rgba(255,210,80,.3)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(255,210,80,0)"
+    );
+
+    ctx.fillStyle=glow;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+}
+
+
+/* =========================================================
+   DRAW CLOUDS
+========================================================= */
+
+function drawClouds(){
+
+    for(const c of clouds){
+
+        ctx.save();
+
+        ctx.globalAlpha=c.alpha;
+
+        ctx.fillStyle="#fff";
+
+        const s=c.size;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            c.x,
+            c.y,
+            25*s,
+            0,
+            Math.PI*2
+        );
+
+        ctx.arc(
+            c.x+35*s,
+            c.y-10*s,
+            32*s,
+            0,
+            Math.PI*2
+        );
+
+        ctx.arc(
+            c.x+70*s,
+            c.y,
+            24*s,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+
+        ctx.restore();
+    }
+}
+
+
+/* =========================================================
+   DRAW PIPES
+========================================================= */
+
+function drawPipe(x,y,w,h){
+
+    if(h<=0)return;
+
+    const g=
+        ctx.createLinearGradient(
+            x,0,x+w,0
+        );
+
+    g.addColorStop(0,"#08722e");
+    g.addColorStop(.2,"#3ed653");
+    g.addColorStop(.48,"#a3f36f");
+    g.addColorStop(.7,"#35c84e");
+    g.addColorStop(1,"#075b26");
+
+    ctx.fillStyle=g;
+
+    ctx.fillRect(
+        x,y,w,h
+    );
+
+    ctx.fillStyle=
+        "rgba(255,255,255,.18)";
+
+    ctx.fillRect(
+        x+9,
+        y,
+        7,
+        h
+    );
+}
+
+function drawPipeCap(x,y,w){
+
+    const h=27;
+
+    const g=
+        ctx.createLinearGradient(
+            x,0,x+w,0
+        );
+
+    g.addColorStop(0,"#08722e");
+    g.addColorStop(.25,"#45db55");
+    g.addColorStop(.5,"#a8f673");
+    g.addColorStop(1,"#075b26");
+
+    ctx.fillStyle=g;
+
+    ctx.fillRect(
+        x-7,
+        y,
+        w+14,
+        h
+    );
+
+    ctx.fillStyle=
+        "rgba(255,255,255,.2)";
+
+    ctx.fillRect(
+        x+4,
+        y+3,
+        7,
+        h-6
+    );
+}
+
+function drawPipes(){
+
+    for(const p of pipes){
+
+        const w=pipeWidth();
+
+        drawPipe(
+            p.x,
+            0,
+            w,
+            p.gapY-27
+        );
+
+        drawPipeCap(
+            p.x,
+            p.gapY-27,
+            w
+        );
+
+        const bottom=
+            p.gapY+p.gap;
+
+        drawPipeCap(
+            p.x,
+            bottom,
+            w
+        );
+
+        drawPipe(
+            p.x,
+            bottom+27,
+            w,
+            H-groundHeight-
+            bottom-27
+        );
+
+        /*
+            Moving-gap indicator.
+        */
+
+        if(p.moving){
+
+            ctx.strokeStyle=
+                "rgba(70,240,255,.5)";
+
+            ctx.lineWidth=2;
+
+            ctx.setLineDash([5,7]);
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                p.x-10,
+                p.gapY
+            );
+
+            ctx.lineTo(
+                p.x-10,
+                bottom
+            );
+
+            ctx.stroke();
+
+            ctx.setLineDash([]);
+        }
+    }
+}
+
+
+/* =========================================================
+   DRAW TRAPS
+========================================================= */
+
+function drawTraps(){
+
+    for(const t of traps){
+
+        if(t.type==="fire"){
+
+            drawFire(t);
+
+        }else if(t.type==="electric"){
+
+            drawElectric(t);
+
+        }else{
+
+            drawSpikes(t);
+        }
+    }
+}
+
+
+/* =========================================================
+   FIRE
+========================================================= */
+
+function drawFire(t){
+
+    ctx.save();
+
+    ctx.translate(t.x,t.y);
+
+    const glow=
+        ctx.createRadialGradient(
+            0,0,2,
+            0,0,t.radius*2
+        );
+
+    glow.addColorStop(
+        0,
+        "rgba(255,255,100,.9)"
+    );
+
+    glow.addColorStop(
+        .35,
+        "rgba(255,80,20,.55)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(255,0,0,0)"
+    );
+
+    ctx.fillStyle=glow;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        t.radius*2,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="#ff4a16";
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,-20);
+    ctx.quadraticCurveTo(
+        -19,-2,
+        -8,13
+    );
+
+    ctx.quadraticCurveTo(
+        0,20,
+        8,13
+    );
+
+    ctx.quadraticCurveTo(
+        19,-2,
+        0,-20
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="#ffe53d";
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,-12);
+    ctx.quadraticCurveTo(
+        -8,0,
+        -3,9
+    );
+
+    ctx.quadraticCurveTo(
+        0,13,
+        4,8
+    );
+
+    ctx.quadraticCurveTo(
+        10,0,
+        0,-12
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+
+/* =========================================================
+   ELECTRIC TRAP
+========================================================= */
+
+function drawElectric(t){
+
+    ctx.save();
+
+    ctx.translate(t.x,t.y);
+
+    ctx.rotate(t.rotation);
+
+    ctx.shadowBlur=25;
+    ctx.shadowColor="#42efff";
+
+    ctx.strokeStyle="#4deeff";
+
+    ctx.lineWidth=4;
+
+    ctx.beginPath();
+
+    for(let i=0;i<9;i++){
+
+        const a=
+            (Math.PI*2/9)*i;
+
+        const r=
+            i%2===0
+            ?t.radius
+            :t.radius*.55;
+
+        const x=Math.cos(a)*r;
+        const y=Math.sin(a)*r;
+
+        if(i===0)
+            ctx.moveTo(x,y);
+        else
+            ctx.lineTo(x,y);
+    }
+
+    ctx.closePath();
+
+    ctx.stroke();
+
+    ctx.fillStyle="#dfffff";
+
+    ctx.beginPath();
+
+    ctx.moveTo(-4,-20);
+    ctx.lineTo(6,-3);
+    ctx.lineTo(-1,-3);
+    ctx.lineTo(5,18);
+    ctx.lineTo(-9,-6);
+    ctx.lineTo(-2,-6);
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+
+/* =========================================================
+   SPIKES
+========================================================= */
+
+function drawSpikes(t){
+
+    ctx.save();
+
+    ctx.translate(t.x,t.y);
+
+    ctx.rotate(t.rotation);
+
+    ctx.shadowBlur=14;
+    ctx.shadowColor="#ff4c75";
+
+    for(let i=0;i<8;i++){
+
+        ctx.rotate(Math.PI/4);
+
+        ctx.fillStyle=
+            i%2
+            ?"#ff5975"
+            :"#ff9b43";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            -t.radius
+        );
+
+        ctx.lineTo(
+            -7,
+            -8
+        );
+
+        ctx.lineTo(
+            7,
+            -8
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+    }
+
+    ctx.fillStyle="#202a3a";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        10,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+
+/* =========================================================
+   DRAW COLLECTIBLES
+========================================================= */
+
+function drawCollectibles(){
+
+    for(const c of collectibles){
+
+        if(c.type==="coin"){
+
+            ctx.save();
+
+            ctx.translate(c.x,c.y);
+
+            const s=
+                1+
+                Math.sin(c.phase)*.08;
+
+            ctx.scale(s,s);
+
+            ctx.shadowBlur=20;
+            ctx.shadowColor="#ffd43d";
+
+            ctx.fillStyle="#ffd43d";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                0,
+                0,
+                c.radius,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+            ctx.shadowBlur=0;
+
+            ctx.fillStyle="#fff2a0";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                -3,
+                -4,
+                4,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+
+            ctx.fillStyle="#9d6700";
+
+            ctx.font="bold 13px Arial";
+
+            ctx.textAlign="center";
+            ctx.textBaseline="middle";
+
+            ctx.fillText(
+                "$",
+                0,
+                1
+            );
+
+            ctx.restore();
+        }
+
+        if(c.type==="shield"){
+
+            ctx.save();
+
+            ctx.translate(c.x,c.y);
+
+            ctx.rotate(c.phase*.3);
+
+            ctx.shadowBlur=25;
+            ctx.shadowColor="#4befff";
+
+            ctx.strokeStyle="#62f2ff";
+
+            ctx.lineWidth=4;
+
+            ctx.beginPath();
+
+            ctx.moveTo(0,-16);
+            ctx.lineTo(14,-8);
+            ctx.lineTo(11,10);
+            ctx.lineTo(0,18);
+            ctx.lineTo(-11,10);
+            ctx.lineTo(-14,-8);
+
+            ctx.closePath();
+
+            ctx.stroke();
+
+            ctx.fillStyle=
+                "rgba(80,230,255,.25)";
+
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+}
+
+
+/* =========================================================
+   DRAW GROUND
+========================================================= */
+
+function drawGround(){
+
+    const y=
+        H-groundHeight;
+
+    ctx.fillStyle="#45c653";
+
+    ctx.fillRect(
+        0,
+        y,
+        W,
+        17
+    );
+
+    ctx.fillStyle="#91ee64";
+
+    for(let x=0;x<W;x+=20){
+
+        ctx.fillRect(
+            x,
+            y,
+            10,
+            5
+        );
+    }
+
+    const dirt=
+        ctx.createLinearGradient(
+            0,
+            y+17,
+            0,
+            H
+        );
+
+    dirt.addColorStop(
+        0,
+        "#ae7740"
+    );
+
+    dirt.addColorStop(
+        1,
+        "#63391f"
+    );
+
+    ctx.fillStyle=dirt;
+
+    ctx.fillRect(
+        0,
+        y+17,
+        W,
+        groundHeight-17
+    );
+}
+
+
+/* =========================================================
+   DRAW BIRD
+========================================================= */
+
+function drawBird(){
+
+    ctx.save();
+
+    ctx.translate(
+        bird.x,
+        bird.y
+    );
+
+    ctx.rotate(bird.rotation);
+
+    if(bird.invincible>0){
+
+        ctx.globalAlpha=
+            .55+
+            Math.sin(time*30)*.35;
+    }
+
+    /*
+        Shield.
+    */
+
+    if(bird.shield>0){
+
+        ctx.shadowBlur=30;
+        ctx.shadowColor="#50efff";
+
+        ctx.strokeStyle=
+            "rgba(80,240,255,.85)";
+
+        ctx.lineWidth=3;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            0,
+            0,
+            28+
+            Math.sin(time*8)*2,
+            0,
+            Math.PI*2
+        );
+
+        ctx.stroke();
+    }
+
+    ctx.shadowBlur=18;
+    ctx.shadowColor="#ffb51c";
+
+    const g=
+        ctx.createRadialGradient(
+            -6,-8,2,
+            0,0,24
+        );
+
+    g.addColorStop(
+        0,
+        "#fff7a0"
+    );
+
+    g.addColorStop(
+        .45,
+        "#ffe03d"
+    );
+
+    g.addColorStop(
+        1,
+        "#e98d0d"
+    );
+
+    ctx.fillStyle=g;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        bird.radius,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.shadowBlur=0;
+
+    /*
+        Wing.
+    */
+
+    ctx.fillStyle="#e8a216";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        -8,
+        7,
+        13,
+        8,
+        bird.wing*.4,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+        Eye.
+    */
+
+    ctx.fillStyle="#fff";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        7,
+        -8,
+        7,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.fillStyle="#15202d";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        9,
+        -8,
+        3,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+        Beak.
+    */
+
+    ctx.fillStyle="#ff7617";
+
+    ctx.beginPath();
+
+    ctx.moveTo(14,-1);
+    ctx.lineTo(30,5);
+    ctx.lineTo(14,10);
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    /*
+        Tail.
+    */
+
+    ctx.fillStyle="#e9a218";
+
+    ctx.beginPath();
+
+    ctx.moveTo(-13,0);
+    ctx.lineTo(-28,-9);
+    ctx.lineTo(-22,5);
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+
+/* =========================================================
+   DRAW PARTICLES
+========================================================= */
+
+function drawParticles(){
+
+    for(const p of particles){
+
+        ctx.globalAlpha=
+            Math.max(0,p.life);
+
+        ctx.fillStyle=p.color;
+
+        ctx.shadowBlur=10;
+        ctx.shadowColor=p.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            p.size,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha=1;
+    ctx.shadowBlur=0;
+}
+
+
+/* =========================================================
+   DRAW
+========================================================= */
+
+function draw(){
+
+    ctx.save();
+
+    /*
+        Screen shake.
+    */
+
+    if(shake>0){
+
+        ctx.translate(
+            random(-shake,shake),
+            random(-shake,shake)
+        );
+
+        shake*=.9;
+
+        if(shake<.2)
+            shake=0;
+    }
+
+    drawSky();
+
+    drawClouds();
+
+    /*
+        Distant mountains.
+    */
+
+    ctx.fillStyle=
+        "rgba(25,100,100,.4)";
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,H-groundHeight-80);
+
+    for(let x=0;x<=W;x+=50){
+
+        ctx.lineTo(
+            x,
+            H-groundHeight-
+            80-
+            Math.sin(x*.02)*30
+        );
+    }
+
+    ctx.lineTo(W,H-groundHeight);
+    ctx.lineTo(0,H-groundHeight);
+
+    ctx.fill();
+
+    drawPipes();
+
+    drawTraps();
+
+    drawCollectibles();
+
+    drawGround();
+
+    drawBird();
+
+    drawParticles();
+
+    ctx.restore();
+}
+
+
+/* =========================================================
+   UPDATE
+========================================================= */
+
+function update(dt){
+
+    time+=dt;
+
+    updateBird(dt);
+
+    updatePipes(dt);
+
+    updateTraps(dt);
+
+    updateCollectibles(dt);
+
+    updateParticles(dt);
+
+    updateClouds(dt);
+
+    checkCollisions();
+}
+
+
+/* =========================================================
+   GAME LOOP
+========================================================= */
+
+let last=performance.now();
+
+function loop(now){
+
+    const dt=
+        Math.min(
+            .033,
+            (now-last)/1000
+        );
+
+    last=now;
+
+    update(dt);
+
+    draw();
+
+    requestAnimationFrame(loop);
+}
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+reset();
+
+bestEl.textContent=best;
+
+requestAnimationFrame(loop);
+
+</script>
+
+</body>
+</html>

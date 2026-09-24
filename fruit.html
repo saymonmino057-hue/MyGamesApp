@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Fruit Jump Rush</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#020711;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+#game{
+    position:relative;
+    width:min(1200px,100vw);
+    height:min(760px,100vh);
+    overflow:hidden;
+    background:
+        radial-gradient(circle at 50% 70%,#12395b 0%,transparent 48%),
+        linear-gradient(#020b19,#03172b 55%,#010711);
+    box-shadow:0 0 80px rgba(0,180,255,.12);
+}
+
+canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    touch-action:none;
+    cursor:crosshair;
+}
+
+#hud{
+    position:absolute;
+    z-index:5;
+    top:18px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:35px;
+    padding:13px 28px;
+    border:1px solid rgba(150,220,255,.2);
+    border-radius:22px;
+    background:rgba(2,13,29,.72);
+    backdrop-filter:blur(15px);
+}
+
+.stat{
+    min-width:80px;
+    text-align:center;
+}
+
+.stat span{
+    display:block;
+    color:#718ba8;
+    font-size:9px;
+    letter-spacing:3px;
+    margin-bottom:4px;
+}
+
+.stat strong{
+    color:white;
+    font-size:26px;
+}
+
+#score{color:#38eaff;text-shadow:0 0 15px #38eaff}
+#best{color:#c878ff}
+#misses{color:#ff5378}
+
+#hint{
+    position:absolute;
+    z-index:5;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:10px 24px;
+    border-radius:30px;
+    background:rgba(2,12,25,.72);
+    border:1px solid rgba(130,210,255,.16);
+    color:#8da5bf;
+    font-size:10px;
+    letter-spacing:3px;
+    white-space:nowrap;
+}
+
+#overlay{
+    display:none;
+    position:absolute;
+    inset:0;
+    z-index:20;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,3,10,.75);
+    backdrop-filter:blur(12px);
+}
+
+.panel{
+    width:min(420px,88%);
+    text-align:center;
+    padding:42px 30px;
+    border-radius:28px;
+    border:1px solid rgba(100,220,255,.25);
+    background:linear-gradient(145deg,rgba(9,32,56,.97),rgba(2,10,23,.97));
+    box-shadow:0 30px 80px rgba(0,0,0,.55);
+}
+
+.panel h1{
+    color:white;
+    font-size:42px;
+    margin-bottom:8px;
+}
+
+.panel p{
+    color:#8ca4bf;
+    margin-bottom:12px;
+}
+
+#finalScore{
+    color:#38eaff;
+    font-size:55px;
+    font-weight:900;
+    margin-bottom:25px;
+}
+
+button{
+    border:0;
+    border-radius:15px;
+    padding:15px 34px;
+    font-weight:800;
+    letter-spacing:2px;
+    cursor:pointer;
+    color:#02101b;
+    background:linear-gradient(135deg,#35eaff,#5b8cff);
+    box-shadow:0 8px 30px rgba(40,210,255,.3);
+}
+
+button:hover{
+    transform:translateY(-2px);
+}
+
+@media(max-width:600px){
+    #hud{
+        width:calc(100% - 25px);
+        justify-content:space-around;
+        gap:5px;
+        padding:11px 8px;
+    }
+
+    .stat{
+        min-width:65px;
+    }
+
+    .stat strong{
+        font-size:21px;
+    }
+
+    #hint{
+        font-size:8px;
+        letter-spacing:2px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+<canvas id="canvas"></canvas>
+
+<div id="hud">
+    <div class="stat">
+        <span>SCORE</span>
+        <strong id="score">0</strong>
+    </div>
+
+    <div class="stat">
+        <span>BEST</span>
+        <strong id="best">0</strong>
+    </div>
+
+    <div class="stat">
+        <span>MISSES</span>
+        <strong id="misses">0/5</strong>
+    </div>
+</div>
+
+<div id="hint">
+    TAP OR SWIPE THE FRUIT
+</div>
+
+<div id="overlay">
+    <div class="panel">
+        <h1>GAME OVER</h1>
+        <p>FINAL SCORE</p>
+        <div id="finalScore">0</div>
+        <button id="restart">PLAY AGAIN</button>
+    </div>
+</div>
+
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   SETUP
+========================================================= */
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const game = document.getElementById("game");
+
+const scoreEl = document.getElementById("score");
+const bestEl = document.getElementById("best");
+const missesEl = document.getElementById("misses");
+
+const overlay = document.getElementById("overlay");
+const finalScoreEl = document.getElementById("finalScore");
+const restartButton = document.getElementById("restart");
+
+let W = 0;
+let H = 0;
+let DPR = 1;
+
+function resize(){
+
+    const rect = game.getBoundingClientRect();
+
+    W = rect.width;
+    H = rect.height;
+
+    DPR = Math.min(window.devicePixelRatio || 1,2);
+
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+
+window.addEventListener("resize",resize);
+resize();
+
+/* =========================================================
+   GAME VARIABLES
+========================================================= */
+
+let score = 0;
+let best = Number(localStorage.getItem("fruitJumpBest") || 0);
+
+let misses = 0;
+const MAX_MISSES = 5;
+
+let running = true;
+
+/*
+    IMPORTANT:
+
+    There is ONLY ONE fruit.
+
+    fruit will either:
+    - be sliced
+    - or fall off the screen
+
+    Then the next fruit launches.
+*/
+
+let fruit = null;
+
+let particles = [];
+let juice = [];
+let stars = [];
+
+let nextFruitTimer = 0;
+
+/* =========================================================
+   FRUIT TYPES
+========================================================= */
+
+const fruitTypes = [
+
+    {
+        name:"apple",
+        color:"#ed2947",
+        dark:"#7e1027",
+        light:"#ff8794"
+    },
+
+    {
+        name:"orange",
+        color:"#ff921e",
+        dark:"#b84806",
+        light:"#ffd17b"
+    },
+
+    {
+        name:"lemon",
+        color:"#ffd52b",
+        dark:"#bd8d00",
+        light:"#fff29b"
+    },
+
+    {
+        name:"watermelon",
+        color:"#20d978",
+        dark:"#08733e",
+        light:"#82ffb6"
+    },
+
+    {
+        name:"blueberry",
+        color:"#557fff",
+        dark:"#273b9c",
+        light:"#a8baff"
+    },
+
+    {
+        name:"strawberry",
+        color:"#ff397e",
+        dark:"#98103f",
+        light:"#ff9fc1"
+    }
+];
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function random(min,max){
+    return Math.random()*(max-min)+min;
+}
+
+function randomInt(min,max){
+    return Math.floor(random(min,max+1));
+}
+
+/* =========================================================
+   STARS
+========================================================= */
+
+function createStars(){
+
+    stars=[];
+
+    for(let i=0;i<110;i++){
+
+        stars.push({
+            x:Math.random()*W,
+            y:Math.random()*H,
+            size:random(.5,1.8),
+            alpha:random(.2,.9),
+            speed:random(.5,1.5)
+        });
+    }
+}
+
+createStars();
+
+/* =========================================================
+   CREATE ONE FRUIT
+========================================================= */
+
+function launchFruit(){
+
+    if(!running || fruit) return;
+
+    const radius=random(38,50);
+
+    const type=
+        fruitTypes[randomInt(0,fruitTypes.length-1)];
+
+    /*
+        Spread the fruit across the screen.
+    */
+
+    const x=random(
+        radius+25,
+        W-radius-25
+    );
+
+    /*
+        Start below the screen.
+
+        This makes the fruit visibly launch
+        from the bottom.
+    */
+
+    fruit={
+
+        x:x,
+
+        y:H+radius+20,
+
+        /*
+            Horizontal travel.
+        */
+
+        vx:random(-3.8,3.8),
+
+        /*
+            Very strong upward velocity.
+            This creates the LONG jump.
+        */
+
+        vy:random(-19.5,-17.5),
+
+        /*
+            Gravity.
+        */
+
+        gravity:.34,
+
+        radius:radius,
+
+        type:type,
+
+        rotation:random(0,Math.PI*2),
+
+        rotationSpeed:random(-.055,.055),
+
+        scale:1,
+
+        sliced:false
+    };
+}
+
+/* =========================================================
+   FRUIT EXPLOSION
+========================================================= */
+
+function explodeFruit(){
+
+    if(!fruit) return;
+
+    const f=fruit;
+
+    /*
+        Large colorful particles.
+    */
+
+    for(let i=0;i<55;i++){
+
+        const angle=Math.random()*Math.PI*2;
+        const speed=random(2,9);
+
+        particles.push({
+
+            x:f.x,
+            y:f.y,
+
+            vx:Math.cos(angle)*speed,
+            vy:Math.sin(angle)*speed,
+
+            life:1,
+
+            size:random(2,7),
+
+            color:
+                Math.random()<.65
+                ?f.type.color
+                :f.type.light
+        });
+    }
+
+    /*
+        Juice droplets.
+    */
+
+    for(let i=0;i<24;i++){
+
+        const angle=Math.random()*Math.PI*2;
+
+        juice.push({
+
+            x:f.x,
+            y:f.y,
+
+            vx:Math.cos(angle)*random(3,10),
+            vy:Math.sin(angle)*random(3,10),
+
+            life:1,
+
+            size:random(3,8),
+
+            color:f.type.color
+        });
+    }
+
+    /*
+        Big shockwave.
+    */
+
+    juice.push({
+
+        x:f.x,
+        y:f.y,
+
+        vx:0,
+        vy:0,
+
+        life:1,
+
+        size:10,
+
+        ring:true,
+
+        color:f.type.light
+    });
+}
+
+/* =========================================================
+   SLICE FRUIT
+========================================================= */
+
+function sliceFruit(){
+
+    if(!fruit || fruit.sliced) return;
+
+    fruit.sliced=true;
+
+    score+=10;
+
+    if(score>best){
+
+        best=score;
+
+        localStorage.setItem(
+            "fruitJumpBest",
+            best
+        );
+    }
+
+    scoreEl.textContent=score;
+    bestEl.textContent=best;
+
+    explodeFruit();
+
+    /*
+        Remove the current fruit.
+
+        Only after this happens will another
+        fruit appear.
+    */
+
+    fruit=null;
+
+    nextFruitTimer=180;
+}
+
+/* =========================================================
+   MISS
+========================================================= */
+
+function missFruit(){
+
+    misses++;
+
+    missesEl.textContent=
+        misses+"/"+MAX_MISSES;
+
+    fruit=null;
+
+    if(misses>=MAX_MISSES){
+
+        gameOver();
+
+        return;
+    }
+
+    /*
+        Small delay before the next fruit.
+    */
+
+    nextFruitTimer=180;
+}
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+let pointerDown=false;
+let previousPointer=null;
+
+function getPointer(e){
+
+    const rect=canvas.getBoundingClientRect();
+
+    return {
+        x:e.clientX-rect.left,
+        y:e.clientY-rect.top
+    };
+}
+
+canvas.addEventListener("pointerdown",e=>{
+
+    pointerDown=true;
+
+    const p=getPointer(e);
+
+    previousPointer=p;
+
+    hitFruit(p.x,p.y);
+});
+
+canvas.addEventListener("pointermove",e=>{
+
+    if(!pointerDown) return;
+
+    const p=getPointer(e);
+
+    if(previousPointer){
+
+        const dx=p.x-previousPointer.x;
+        const dy=p.y-previousPointer.y;
+
+        const distance=Math.hypot(dx,dy);
+
+        const steps=Math.max(
+            1,
+            Math.ceil(distance/10)
+        );
+
+        /*
+            Check every point along the swipe.
+        */
+
+        for(let i=1;i<=steps;i++){
+
+            const x=
+                previousPointer.x+
+                dx*(i/steps);
+
+            const y=
+                previousPointer.y+
+                dy*(i/steps);
+
+            hitFruit(x,y);
+        }
+    }
+
+    previousPointer=p;
+});
+
+canvas.addEventListener("pointerup",()=>{
+
+    pointerDown=false;
+    previousPointer=null;
+});
+
+canvas.addEventListener("pointercancel",()=>{
+
+    pointerDown=false;
+    previousPointer=null;
+});
+
+/* =========================================================
+   HIT DETECTION
+========================================================= */
+
+function hitFruit(x,y){
+
+    if(!fruit || fruit.sliced) return;
+
+    const dx=x-fruit.x;
+    const dy=y-fruit.y;
+
+    const distance=Math.hypot(dx,dy);
+
+    if(distance<fruit.radius*1.3){
+
+        sliceFruit();
+    }
+}
+
+/* =========================================================
+   DRAW BACKGROUND
+========================================================= */
+
+function drawBackground(time){
+
+    const gradient=
+        ctx.createLinearGradient(0,0,0,H);
+
+    gradient.addColorStop(0,"#020916");
+    gradient.addColorStop(.5,"#06213a");
+    gradient.addColorStop(1,"#010710");
+
+    ctx.fillStyle=gradient;
+
+    ctx.fillRect(0,0,W,H);
+
+    /*
+        Large atmospheric glow.
+    */
+
+    const glow=
+        ctx.createRadialGradient(
+            W/2,
+            H*.68,
+            0,
+            W/2,
+            H*.68,
+            H*.7
+        );
+
+    glow.addColorStop(
+        0,
+        "rgba(25,140,220,.15)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(0,0,0,0)"
+    );
+
+    ctx.fillStyle=glow;
+
+    ctx.fillRect(0,0,W,H);
+
+    /*
+        Stars.
+    */
+
+    for(const star of stars){
+
+        const twinkle=
+            .6+
+            Math.sin(
+                time*.002*star.speed
+            )*.4;
+
+        ctx.globalAlpha=
+            star.alpha*twinkle;
+
+        ctx.fillStyle="#d9efff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            star.x,
+            star.y,
+            star.size,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha=1;
+}
+
+/* =========================================================
+   DRAW GENERIC FRUIT
+========================================================= */
+
+function drawFruit(f){
+
+    ctx.save();
+
+    ctx.translate(f.x,f.y);
+    ctx.rotate(f.rotation);
+    ctx.scale(f.scale,f.scale);
+
+    const r=f.radius;
+
+    /*
+        Glow.
+    */
+
+    ctx.shadowBlur=35;
+    ctx.shadowColor=f.type.color;
+
+    const gradient=
+        ctx.createRadialGradient(
+            -r*.35,
+            -r*.42,
+            2,
+            0,
+            0,
+            r
+        );
+
+    gradient.addColorStop(
+        0,
+        "#ffffff"
+    );
+
+    gradient.addColorStop(
+        .14,
+        f.type.light
+    );
+
+    gradient.addColorStop(
+        .5,
+        f.type.color
+    );
+
+    gradient.addColorStop(
+        1,
+        f.type.dark
+    );
+
+    ctx.fillStyle=gradient;
+
+    /*
+        Slightly organic shape.
+    */
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        r,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+        Apple shape.
+    */
+
+    if(f.type.name==="apple"){
+
+        ctx.fillStyle=f.type.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            -r*.28,
+            -r*.03,
+            r*.72,
+            0,
+            Math.PI*2
+        );
+
+        ctx.arc(
+            r*.28,
+            -r*.03,
+            r*.72,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+    }
+
+    /*
+        Watermelon texture.
+    */
+
+    if(f.type.name==="watermelon"){
+
+        ctx.shadowBlur=0;
+
+        ctx.strokeStyle=
+            "rgba(0,80,40,.45)";
+
+        ctx.lineWidth=5;
+
+        for(let i=-2;i<=2;i++){
+
+            ctx.beginPath();
+
+            ctx.arc(
+                i*r*.25,
+                0,
+                r*.8,
+                -Math.PI/2,
+                Math.PI/2
+            );
+
+            ctx.stroke();
+        }
+    }
+
+    /*
+        Strong glassy highlight.
+    */
+
+    ctx.shadowBlur=0;
+
+    ctx.fillStyle=
+        "rgba(255,255,255,.72)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        -r*.32,
+        -r*.38,
+        r*.19,
+        r*.28,
+        -.45,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+        Small secondary highlight.
+    */
+
+    ctx.fillStyle=
+        "rgba(255,255,255,.28)";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        r*.15,
+        r*.1,
+        r*.08,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    /*
+        Stem.
+    */
+
+    ctx.strokeStyle="#63371d";
+    ctx.lineWidth=5;
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,-r*.72);
+    ctx.lineTo(r*.08,-r*.98);
+
+    ctx.stroke();
+
+    /*
+        Leaf.
+    */
+
+    ctx.fillStyle="#36e979";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        r*.25,
+        -r*.83,
+        r*.24,
+        r*.11,
+        -.45,
+        0,
+        Math.PI*2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+}
+
+/* =========================================================
+   DRAW PARTICLES
+========================================================= */
+
+function drawParticles(){
+
+    for(const p of particles){
+
+        ctx.globalAlpha=Math.max(0,p.life);
+
+        ctx.fillStyle=p.color;
+
+        ctx.shadowBlur=15;
+        ctx.shadowColor=p.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            p.size,
+            0,
+            Math.PI*2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha=1;
+    ctx.shadowBlur=0;
+}
+
+/* =========================================================
+   DRAW JUICE
+========================================================= */
+
+function drawJuice(){
+
+    for(const j of juice){
+
+        ctx.globalAlpha=Math.max(0,j.life);
+
+        ctx.strokeStyle=j.color;
+        ctx.fillStyle=j.color;
+
+        if(j.ring){
+
+            ctx.lineWidth=4;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                j.x,
+                j.y,
+                j.size*(2-j.life),
+                0,
+                Math.PI*2
+            );
+
+            ctx.stroke();
+
+        }else{
+
+            ctx.shadowBlur=14;
+            ctx.shadowColor=j.color;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                j.x,
+                j.y,
+                j.size,
+                0,
+                Math.PI*2
+            );
+
+            ctx.fill();
+        }
+    }
+
+    ctx.globalAlpha=1;
+    ctx.shadowBlur=0;
+}
+
+/* =========================================================
+   UPDATE
+========================================================= */
+
+function update(dt){
+
+    if(!running) return;
+
+    /*
+        Wait after a hit/miss.
+    */
+
+    if(!fruit){
+
+        if(nextFruitTimer>0){
+
+            nextFruitTimer-=dt;
+
+        }else{
+
+            launchFruit();
+        }
+    }
+
+    /*
+        Update current fruit.
+    */
+
+    if(fruit){
+
+        /*
+            Gravity.
+        */
+
+        fruit.vy+=fruit.gravity;
+
+        /*
+            Position.
+        */
+
+        fruit.x+=fruit.vx;
+        fruit.y+=fruit.vy;
+
+        /*
+            Rotation.
+        */
+
+        fruit.rotation+=fruit.rotationSpeed;
+
+        /*
+            Bounce softly from side walls.
+        */
+
+        if(
+            fruit.x<fruit.radius &&
+            fruit.vx<0
+        ){
+
+            fruit.x=fruit.radius;
+            fruit.vx*=-.9;
+        }
+
+        if(
+            fruit.x>W-fruit.radius &&
+            fruit.vx>0
+        ){
+
+            fruit.x=
+                W-fruit.radius;
+
+            fruit.vx*=-.9;
+        }
+
+        /*
+            Miss when it falls below
+            the bottom.
+        */
+
+        if(
+            fruit.y>
+            H+fruit.radius+30
+        ){
+
+            missFruit();
+        }
+    }
+
+    /*
+        Explosion particles.
+    */
+
+    for(let i=particles.length-1;i>=0;i--){
+
+        const p=particles[i];
+
+        p.x+=p.vx;
+        p.y+=p.vy;
+
+        p.vx*=.98;
+
+        p.vy+=.18;
+
+        p.life-=.025;
+
+        if(p.life<=0){
+
+            particles.splice(i,1);
+        }
+    }
+
+    /*
+        Juice.
+    */
+
+    for(let i=juice.length-1;i>=0;i--){
+
+        const j=juice[i];
+
+        if(!j.ring){
+
+            j.x+=j.vx;
+            j.y+=j.vy;
+
+            j.vx*=.96;
+            j.vy*=.96;
+
+            j.vy+=.12;
+        }
+
+        j.life-=.035;
+
+        if(j.life<=0){
+
+            juice.splice(i,1);
+        }
+    }
+}
+
+/* =========================================================
+   GAME OVER
+========================================================= */
+
+function gameOver(){
+
+    running=false;
+
+    finalScoreEl.textContent=score;
+
+    overlay.style.display="flex";
+}
+
+/* =========================================================
+   RESTART
+========================================================= */
+
+function restart(){
+
+    score=0;
+    misses=0;
+
+    fruit=null;
+
+    particles=[];
+    juice=[];
+
+    nextFruitTimer=500;
+
+    running=true;
+
+    scoreEl.textContent="0";
+    bestEl.textContent=best;
+    missesEl.textContent="0/5";
+
+    overlay.style.display="none";
+}
+
+restartButton.addEventListener("click",restart);
+
+/* =========================================================
+   DRAW
+========================================================= */
+
+function draw(time){
+
+    drawBackground(time);
+
+    /*
+        There can ONLY be zero or one fruit.
+    */
+
+    if(fruit){
+
+        drawFruit(fruit);
+    }
+
+    drawParticles();
+
+    drawJuice();
+}
+
+/* =========================================================
+   MAIN LOOP
+========================================================= */
+
+let lastTime=performance.now();
+
+function loop(time){
+
+    const dt=Math.min(
+        32,
+        time-lastTime
+    );
+
+    lastTime=time;
+
+    update(dt);
+
+    draw(time);
+
+    requestAnimationFrame(loop);
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+bestEl.textContent=best;
+
+nextFruitTimer=500;
+
+requestAnimationFrame(loop);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>البطة الطائرة: مغامرة شيكن ران 🦆</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background: #1e293b; 
+            color: white; 
+            font-family: 'Poppins', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            overflow: hidden;
+        }
+        h1 { 
+            color: #ffde59; 
+            margin: 0 0 5px 0; 
+            font-size: 2.2rem;
+            text-shadow: 3px 3px 0px #000;
+        }
+        .score { 
+            font-size: 1.2rem; 
+            margin-bottom: 12px; 
+            font-weight: 700; 
+            color: #fff;
+            background: #00000040;
+            padding: 4px 15px;
+            border-radius: 50px;
+        }
+        .score span { color: #ffde59; }
+        
+        .game-container {
+            position: relative;
+            width: 600px;
+            height: 400px;
+        }
+
+        canvas { 
+            background-color: #86efac; 
+            border: 6px solid #1e293b; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            display: block;
+        }
+
+        .game-over-screen {
+            position: absolute;
+            top: 6px; left: 6px; 
+            width: calc(100% - 12px); 
+            height: calc(100% - 12px);
+            background: rgba(30, 41, 59, 0.92);
+            backdrop-filter: blur(5px);
+            border-radius: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        .game-over-screen.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .game-over-screen h2 {
+            color: #ff5757;
+            font-size: 2.6rem;
+            margin: 0 0 10px 0;
+            text-shadow: 2px 2px 0px #000;
+        }
+        .restart-btn {
+            padding: 10px 24px;
+            font-size: 1rem;
+            font-weight: 700;
+            background: #ffde59;
+            color: #1e293b;
+            border: 3px solid #1e293b;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 0px #1e293b;
+            transition: 0.1s;
+        }
+        .restart-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0px #1e293b; }
+        .restart-btn:active { transform: translateY(2px); box-shadow: 0 2px 0px #1e293b; }
+        
+        .back-btn { 
+            margin-top: 15px; 
+            padding: 8px 18px; 
+            background: #ff5757; 
+            color: white; 
+            border: 3px solid #1e293b;
+            border-radius: 12px; 
+            cursor: pointer; 
+            text-decoration: none; 
+            font-size: 0.95rem; 
+            font-weight: 700;
+            box-shadow: 0 4px 0px #1e293b;
+        }
+        .back-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 0px #1e293b; }
+    </style>
+</head>
+<body>
+
+    <h1>🐔 CHICKEN DUCK RUN 🦆</h1>
+    <div class="score">النقاط: <span id="scoreText">0</span> | المستوى: <span id="levelText" style="color:#60a5fa;">1</span></div>
+    
+    <div class="game-container">
+        <canvas id="duckCanvas" width="600" height="400"></canvas>
+        
+        <div class="game-over-screen" id="gameOverScreen">
+            <h2>ريش البطة طار! 🪶💥</h2>
+            <p style="font-size: 1.2rem; margin: 5px 0 15px 0;">النتيجة ديالك هي: <span id="finalScore" style="color:#ffde59; font-weight:700;">0</span></p>
+            <button class="restart-btn" onclick="resetGame()">طير من جديد 🔄</button>
+        </div>
+    </div>
+    
+    <a href="index.html" class="back-btn">⬅️ مركز الألعاب</a>
+
+    <script>
+        const canvas = document.getElementById("duckCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let score = 0;
+        let isGameOver = false;
+        let gameSpeed = 3.5; 
+        let currentLevel = 1;
+
+        let duck = {
+            x: 120,
+            y: 200,
+            radius: 16, 
+            gravity: 0.35,
+            velocity: 0,
+            lift: -6.8
+        };
+
+        let obstacles = [];
+        let clouds = [
+            { x: 100, y: 250, size: 50 },
+            { x: 350, y: 280, size: 70 },
+            { x: 550, y: 230, size: 45 }
+        ];
+        
+        let spawnTimer = 0;
+        let rotationAngle = 0; 
+        let stripeOffset = 0;
+
+        function spawnObstacle() {
+            let choice = Math.random();
+
+            // نظام توزيع الفخاخ على حساب المستوى (Level)
+            if (currentLevel === 1) {
+                // المستوى 1: غير المنصات والمناشير الثابتة
+                if (choice < 0.5) {
+                    createPlatform(false);
+                } else {
+                    createSaw();
+                }
+            } 
+            else if (currentLevel === 2) {
+                // المستوى 2: كيتزاد الليزر والسرعة كطلع
+                if (choice < 0.4) createPlatform(false);
+                else if (choice < 0.7) createSaw();
+                else createLaser();
+            } 
+            else {
+                // المستوى 3 (الكابوس): كيتزاد الفأس + المنصات كتولي كتحرك!
+                if (choice < 0.3) createPlatform(true); // منصة متحركة الفوق والتحت
+                else if (choice < 0.5) createSaw();
+                else if (choice < 0.75) createLaser();
+                else createAxe();
+            }
+        }
+
+        // دالات مساعدة لإنشاء الفخاخ
+        function createPlatform(isMoving) {
+            let gap = currentLevel === 3 ? 140 : 135; // توسيع الفجوة قليلاً في المستوى الصعب جداً
+            let minHeight = 60;
+            let maxHeight = canvas.height - gap - minHeight - 50;
+            let topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+            obstacles.push({
+                x: canvas.width + 40,
+                topHeight: topHeight,
+                bottomY: topHeight + gap,
+                width: 60,
+                type: 'platform',
+                moving: isMoving,
+                dir: Math.random() > 0.5 ? 1 : -1, // اتجاه الحركة
+                initialTop: topHeight,
+                gap: gap,
+                passed: false
+            });
+        }
+
+        function createSaw() {
+            let randomY = Math.floor(Math.random() * (canvas.height - 160)) + 80;
+            obstacles.push({ x: canvas.width + 40, y: randomY, radius: 24, type: 'saw-grey', passed: false });
+        }
+
+        function createLaser() {
+            let randomY = Math.floor(Math.random() * (canvas.height - 120)) + 60;
+            obstacles.push({ x: canvas.width + 100, y: randomY, height: 16, type: 'laser', timer: 0, passed: false });
+        }
+
+        function createAxe() {
+            obstacles.push({ x: canvas.width + 60, y: 0, radius: 35, type: 'pendulum-axe', phase: Math.random() * Math.PI, passed: false });
+        }
+
+        function update() {
+            if (isGameOver) return;
+
+            duck.velocity += duck.gravity;
+            duck.y += duck.velocity;
+
+            if (duck.y - duck.radius < 25 || duck.y + duck.radius > canvas.height - 25) {
+                endGame();
+            }
+
+            rotationAngle += 0.15;
+            stripeOffset = (stripeOffset + gameSpeed) % 30;
+
+            clouds.forEach(cloud => {
+                cloud.x -= gameSpeed * 0.3;
+                if (cloud.x + 120 < 0) cloud.x = canvas.width + 50;
+            });
+
+            // تحديث الصعوبة بناءً على السكور
+            if (score >= 6 && score <= 12) {
+                currentLevel = 2;
+                document.getElementById("levelText").innerText = "2 🔥";
+                document.getElementById("levelText").style.color = "#f97316";
+            } else if (score > 12) {
+                currentLevel = 3;
+                document.getElementById("levelText").innerText = "3 💀 الكابوس";
+                document.getElementById("levelText").style.color = "#ef4444";
+            }
+
+            // سرعة تتابع الفخاخ تزيد مع السكور
+            spawnTimer++;
+            let spawnRate = Math.max(45, 80 - score * 2);
+            if (spawnTimer > spawnRate) { 
+                spawnObstacle();
+                spawnTimer = 0;
+            }
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.x -= gameSpeed;
+
+                // تحديث الفخاخ المتحركة (المستوى 3)
+                if (obs.type === 'platform' && obs.moving) {
+                    obs.topHeight += obs.dir * 1.2;
+                    obs.bottomY = obs.topHeight + obs.gap;
+                    // تذبذب المنصة بحدود معينة
+                    if (obs.topHeight < 40 || obs.topHeight > obs.initialTop + 50 || obs.bottomY > canvas.height - 40) {
+                        obs.dir *= -1;
+                    }
+                }
+                if (obs.type === 'pendulum-axe') {
+                    obs.y = 180 + Math.sin(rotationAngle * 0.15 + obs.phase) * 130;
+                }
+                if (obs.type === 'laser') {
+                    obs.timer += 1;
+                }
+
+                // كشف الاصطدامات
+                if (obs.type === 'platform') {
+                    if (duck.x + duck.radius > obs.x && duck.x - duck.radius < obs.x + obs.width) {
+                        if (duck.y - duck.radius < obs.topHeight || duck.y + duck.radius > obs.bottomY) {
+                            endGame();
+                        }
+                    }
+                } else if (obs.type === 'laser') {
+                    if (obs.timer > 40 && obs.timer < 85) {
+                        if (duck.x + duck.radius > obs.x - 200 && duck.x - duck.radius < obs.x + 200) {
+                            if (Math.abs(duck.y - obs.y) < duck.radius + obs.height/2) {
+                                endGame();
+                            }
+                        }
+                    }
+                } else {
+                    let distance = Math.hypot(duck.x - obs.x, duck.y - obs.y);
+                    if (distance < duck.radius + obs.radius - 4) { 
+                        endGame();
+                    }
+                }
+
+                // السكور وزيادة السرعة تدريجياً
+                if (!obs.passed && obs.x < duck.x) {
+                    obs.passed = true;
+                    score++;
+                    document.getElementById("scoreText").innerText = score;
+                    gameSpeed += 0.2; // زيادة السرعة بانتظام مع كل نقطة
+                }
+
+                if (obs.x + 250 < 0) {
+                    obstacles.splice(i, 1); 
+                }
+            }
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        function drawClouds() {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.75)";
+            clouds.forEach(cloud => {
+                ctx.beginPath();
+                ctx.arc(cloud.x, cloud.y, cloud.size, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 0.6, cloud.y - cloud.size * 0.2, cloud.size * 0.8, 0, Math.PI * 2);
+                ctx.arc(cloud.x + cloud.size * 1.2, cloud.y, cloud.size * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawBorders() {
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(0, 0, canvas.width, 25);
+            ctx.fillRect(0, canvas.height - 25, canvas.width, 25);
+
+            ctx.fillStyle = "#f97316"; 
+            ctx.save();
+            for (let x = -30 + stripeOffset; x < canvas.width + 30; x += 30) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0); ctx.lineTo(x + 15, 0); ctx.lineTo(x + 30, 25); ctx.lineTo(x + 15, 25);
+                ctx.closePath(); ctx.fill();
+            }
+            for (let x = -30 - stripeOffset; x < canvas.width + 30; x += 30) {
+                ctx.beginPath();
+                ctx.moveTo(x, canvas.height - 25); ctx.lineTo(x + 15, canvas.height - 25); ctx.lineTo(x + 30, canvas.height); ctx.lineTo(x + 15, canvas.height);
+                ctx.closePath(); ctx.fill();
+            }
+            ctx.restore();
+
+            ctx.strokeStyle = "#1e293b";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(0, 25); ctx.lineTo(canvas.width, 25);
+            ctx.moveTo(0, canvas.height - 25); ctx.lineTo(canvas.width, canvas.height - 25);
+            ctx.stroke();
+        }
+
+        function drawObstacle(obs) {
+            ctx.strokeStyle = "#1e293b";
+            ctx.lineWidth = 4;
+
+            if (obs.type === 'platform') {
+                // لون خاص للمنصات المتحركة (بنفسجي كرتوني) باش يتميزو على الثابتين
+                ctx.fillStyle = obs.moving ? "#a855f7" : "#94a3b8";
+                ctx.fillRect(obs.x, 25, obs.width, obs.topHeight - 25);
+                ctx.strokeRect(obs.x, 25, obs.width, obs.topHeight - 25);
+                ctx.fillRect(obs.x, obs.bottomY, obs.width, (canvas.height - 25) - obs.bottomY);
+                ctx.strokeRect(obs.x, obs.bottomY, obs.width, (canvas.height - 25) - obs.bottomY);
+            } 
+            else if (obs.type === 'laser') {
+                if (obs.timer <= 40) {
+                    ctx.strokeStyle = "#ef4444";
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 5]);
+                    ctx.beginPath();
+                    ctx.moveTo(obs.x - 200, obs.y); ctx.lineTo(obs.x + 200, obs.y);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = "#ef4444";
+                    ctx.font = "bold 11px sans-serif";
+                    ctx.fillText("⚠️ LASER BEAM", obs.x - 45, obs.y - 10);
+                } else if (obs.timer > 40 && obs.timer < 85) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = "#ef4444";
+                    ctx.fillStyle = "#ff8585";
+                    ctx.fillRect(obs.x - 200, obs.y - 8, 400, 16);
+                    ctx.strokeRect(obs.x - 200, obs.y - 8, 400, 16);
+                    ctx.shadowBlur = 0;
+                }
+            } 
+            else if (obs.type === 'pendulum-axe') {
+                ctx.save();
+                ctx.strokeStyle = "#1e293b";
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(obs.x, 25); ctx.lineTo(obs.x, obs.y); ctx.stroke();
+
+                ctx.translate(obs.x, obs.y);
+                ctx.rotate(rotationAngle * 0.5);
+                ctx.fillStyle = "#cbd5e1";
+                ctx.beginPath();
+                ctx.arc(0, 0, obs.radius, 0, Math.PI, true);
+                ctx.lineTo(0, 0);
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.restore();
+            } 
+            else if (obs.type === 'saw-grey') {
+                ctx.save();
+                ctx.translate(obs.x, obs.y);
+                ctx.rotate(rotationAngle);
+                ctx.fillStyle = "#cbd5e1";
+                const teeth = 10;
+                ctx.beginPath();
+                for (let i = 0; i < teeth * 2; i++) {
+                    let r = (i % 2 === 0) ? obs.radius : obs.radius - 6;
+                    let currAngle = (Math.PI * 2 / (teeth * 2)) * i;
+                    ctx.lineTo(Math.cos(currAngle) * r, Math.sin(currAngle) * r);
+                }
+                ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawClouds();
+            obstacles.forEach(obs => { drawObstacle(obs); });
+            drawBorders();
+
+            ctx.save();
+            ctx.translate(duck.x, duck.y);
+            ctx.scale(-1, 1); 
+            let angle = Math.min(Math.max(duck.velocity * 0.04, -0.3), 0.5);
+            ctx.rotate(-angle);
+            ctx.font = "36px serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("🦆", 0, 0);
+            ctx.restore();
+        }
+
+        function fly() {
+            if (!isGameOver) duck.velocity = duck.lift;
+        }
+
+        function endGame() {
+            isGameOver = true;
+            document.getElementById("finalScore").innerText = score;
+            document.getElementById("gameOverScreen").classList.add("active");
+        }
+
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space") {
+                e.preventDefault();
+                fly();
+            }
+        });
+        
+        canvas.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            fly();
+        });
+
+        function resetGame() {
+            score = 0;
+            gameSpeed = 3.5;
+            currentLevel = 1;
+            isGameOver = false;
+            obstacles = [];
+            spawnTimer = 0;
+            duck.y = 200;
+            duck.velocity = 0;
+            document.getElementById("scoreText").innerText = "0";
+            document.getElementById("levelText").innerText = "1";
+            document.getElementById("levelText").style.color = "#60a5fa";
+            document.getElementById("gameOverScreen").classList.remove("active");
+            update();
+        }
+
+        update();
+    </script>
+</body>
+</html>
